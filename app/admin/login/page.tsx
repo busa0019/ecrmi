@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 
-export default function AdminLogin() {
+/* ✅ INNER COMPONENT THAT USES useSearchParams */
+function AdminLoginInner() {
   const params = useSearchParams();
   const [showToast, setShowToast] = useState(false);
 
@@ -15,12 +16,14 @@ export default function AdminLogin() {
   useEffect(() => {
     if (params.get("loggedOut") === "1") {
       setShowToast(true);
-      setTimeout(() => setShowToast(false), 3000);
+      const timer = setTimeout(() => setShowToast(false), 3000);
+      return () => clearTimeout(timer);
     }
   }, [params]);
 
   async function submit() {
     if (loading) return;
+
     setError("");
     setLoading(true);
 
@@ -85,5 +88,14 @@ export default function AdminLogin() {
         </button>
       </div>
     </main>
+  );
+}
+
+/* ✅ PAGE EXPORT WITH SUSPENSE */
+export default function AdminLoginPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Loading…</div>}>
+      <AdminLoginInner />
+    </Suspense>
   );
 }

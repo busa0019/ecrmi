@@ -27,7 +27,7 @@ export async function GET(
     cert.certificateId
   );
 
-  return new Response(pdf, {
+ return new Response(Buffer.from(pdf), {
     headers: {
       "Content-Type": "application/pdf",
       "Content-Disposition": `inline; filename="${cert.courseTitle}.pdf"`,
