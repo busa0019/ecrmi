@@ -39,25 +39,9 @@ export default function CourseGrid({ courses }: { courses: any[] }) {
     return true;
   });
 
-  /* ================= EMPTY STATE ================= */
-
-  if (filteredCourses.length === 0) {
-    return (
-      <div className="text-center py-24">
-        <BookOpen className="w-10 h-10 text-gray-400 mx-auto mb-4" />
-        <h3 className="text-lg font-semibold mb-2">
-          No courses to display
-        </h3>
-        <p className="text-gray-600 max-w-md mx-auto">
-          There are no courses matching this filter at the moment.
-        </p>
-      </div>
-    );
-  }
-
   return (
     <>
-      {/* ===== FILTER BAR ===== */}
+      {/* ===== FILTER BAR (ALWAYS VISIBLE) ===== */}
       <div className="flex flex-wrap gap-2 mb-8">
         {[
           ["all", "All"],
@@ -79,115 +63,124 @@ export default function CourseGrid({ courses }: { courses: any[] }) {
         ))}
       </div>
 
-      {/* ===== COURSE GRID ===== */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 sm:gap-10">
-        {filteredCourses.map((course) => {
-          const s = status[course._id];
-          const exhausted = s && !s.passed && s.attempts >= 3;
+      {/* ===== EMPTY STATE ===== */}
+      {filteredCourses.length === 0 ? (
+        <div className="text-center py-24">
+          <BookOpen className="w-10 h-10 text-gray-400 mx-auto mb-4" />
+          <h3 className="text-lg font-semibold mb-2">
+            No courses to display
+          </h3>
+          <p className="text-gray-600 max-w-md mx-auto">
+            There are no courses matching this filter at the moment.
+          </p>
+        </div>
+      ) : (
+        /* ===== COURSE GRID ===== */
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 sm:gap-10">
+          {filteredCourses.map((course) => {
+            const s = status[course._id];
+            const exhausted = s && !s.passed && s.attempts >= 3;
 
-          const statusColor = s?.passed
-            ? "bg-green-500"
-            : exhausted
-            ? "bg-red-500"
-            : "bg-blue-500";
+            const statusColor = s?.passed
+              ? "bg-green-500"
+              : exhausted
+              ? "bg-red-500"
+              : "bg-blue-500";
 
-          return (
-            <div
-              key={course._id}
-              title={
-                exhausted
-                  ? "This course is locked because you have used all 3 attempts."
-                  : undefined
-              }
-              className={`relative bg-white rounded-2xl border flex flex-col overflow-hidden transition hover:-translate-y-1 hover:shadow-xl ${
-                exhausted
-                  ? "opacity-60 grayscale cursor-not-allowed"
-                  : ""
-              }`}
-            >
-              {/* ===== STATUS BAR ===== */}
+            return (
               <div
-                className={`absolute left-0 top-0 h-full w-1 ${statusColor}`}
-              />
-
-              {/* ===== IMAGE BANNER ===== */}
-              <div className="relative h-16 w-full">
-                <Image
-                  src="/course-banner.jpeg"
-                  alt={course.title}
-                  fill
-                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                  className="object-cover"
+                key={course._id}
+                title={
+                  exhausted
+                    ? "This course is locked because you have used all 3 attempts."
+                    : undefined
+                }
+                className={`relative bg-white rounded-2xl border flex flex-col overflow-hidden transition hover:-translate-y-1 hover:shadow-xl ${
+                  exhausted
+                    ? "opacity-60 grayscale cursor-not-allowed"
+                    : ""
+                }`}
+              >
+                {/* ===== STATUS BAR ===== */}
+                <div
+                  className={`absolute left-0 top-0 h-full w-1 ${statusColor}`}
                 />
 
-                {/* ICON OVERLAY */}
-                <div className="absolute -bottom-6 left-4 w-12 h-12 rounded-xl bg-white shadow flex items-center justify-center">
-                  <BookOpen className="w-6 h-6 text-blue-600" />
-                </div>
-              </div>
+                {/* ===== IMAGE BANNER ===== */}
+                <div className="relative h-16 w-full">
+                  <Image
+                    src="/course-banner.jpeg"
+                    alt={course.title}
+                    fill
+                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                    className="object-cover"
+                  />
 
-              {/* ===== CONTENT ===== */}
-              <div className="pt-10 p-4 sm:p-6 flex flex-col flex-1">
-                <h2 className="text-lg sm:text-xl font-semibold mb-2">
-                  {course.title}
-                </h2>
-
-                <p className="text-gray-600 text-sm mb-4 line-clamp-3">
-                  {course.description}
-                </p>
-
-                <div className="flex flex-wrap gap-3 text-xs text-gray-500 mb-5">
-                  <span className="flex items-center gap-1">
-                    <Clock className="w-4 h-4" />
-                    {course.durationMinutes} mins
-                  </span>
-                  <span>Pass mark: {course.passMark}%</span>
+                  <div className="absolute -bottom-6 left-4 w-12 h-12 rounded-xl bg-white shadow flex items-center justify-center">
+                    <BookOpen className="w-6 h-6 text-blue-600" />
+                  </div>
                 </div>
 
-                {/* ===== STATUS ===== */}
-                {s?.passed && (
-                  <div className="flex items-center gap-2 text-green-600 font-medium text-sm mb-4">
-                    <Award className="w-4 h-4" />
-                    Certificate Earned
-                  </div>
-                )}
+                {/* ===== CONTENT ===== */}
+                <div className="pt-10 p-4 sm:p-6 flex flex-col flex-1">
+                  <h2 className="text-lg sm:text-xl font-semibold mb-2">
+                    {course.title}
+                  </h2>
 
-                {exhausted && (
-                  <div className="flex items-center gap-2 text-red-600 font-medium text-sm mb-4">
-                    <Lock className="w-4 h-4" />
-                    Attempts Exhausted
-                  </div>
-                )}
+                  <p className="text-gray-600 text-sm mb-4 line-clamp-3">
+                    {course.description}
+                  </p>
 
-                {/* ===== CTA ===== */}
-                <div className="mt-auto">
-                  {s?.passed ? (
-                    <Link
-                      href="/verify"
-                      className="btn btn-outline w-full"
-                    >
-                      View Certificate
-                    </Link>
-                  ) : exhausted ? (
-                    <div className="text-center text-sm text-gray-500">
-                      Course Locked
+                  <div className="flex flex-wrap gap-3 text-xs text-gray-500 mb-5">
+                    <span className="flex items-center gap-1">
+                      <Clock className="w-4 h-4" />
+                      {course.durationMinutes} mins
+                    </span>
+                    <span>Pass mark: {course.passMark}%</span>
+                  </div>
+
+                  {/* ===== STATUS ===== */}
+                  {s?.passed && (
+                    <div className="flex items-center gap-2 text-green-600 font-medium text-sm mb-4">
+                      <Award className="w-4 h-4" />
+                      Certificate Earned
                     </div>
-                  ) : (
-                    <Link
-                      href={`/courses/${course._id}`}
-                      className="btn btn-primary w-full"
-                    >
-                      {s?.attempts
-                        ? "Continue Course"
-                        : "Start Course"}
-                    </Link>
                   )}
+
+                  {exhausted && (
+                    <div className="flex items-center gap-2 text-red-600 font-medium text-sm mb-4">
+                      <Lock className="w-4 h-4" />
+                      Attempts Exhausted
+                    </div>
+                  )}
+
+                  {/* ===== CTA ===== */}
+                  <div className="mt-auto">
+                    {s?.passed ? (
+                      <Link href="/verify" className="btn btn-outline w-full">
+                        View Certificate
+                      </Link>
+                    ) : exhausted ? (
+                      <div className="text-center text-sm text-gray-500">
+                        Course Locked
+                      </div>
+                    ) : (
+                      <Link
+                        href={`/courses/${course._id}`}
+                        className="btn btn-primary w-full"
+                      >
+                        {s?.attempts
+                          ? "Continue Course"
+                          : "Start Course"}
+                      </Link>
+                    )}
+                  </div>
                 </div>
               </div>
-            </div>
-          );
-        })}
-      </div>
+            );
+          })}
+        </div>
+      )}
     </>
   );
 }

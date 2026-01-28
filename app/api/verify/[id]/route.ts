@@ -1,14 +1,21 @@
+import { NextRequest } from "next/server";
 import { connectDB } from "@/lib/db";
 import Certificate from "@/models/Certificate";
 
-export async function GET(_: Request, { params }: any) {
+export async function GET(
+  request: NextRequest,
+  context: { params: Promise<{ id: string }> }
+): Promise<Response> {
   await connectDB();
 
+  const { id } = await context.params;
+
   const cert = await Certificate.findOne({
-    certificateId: params.id,
+    certificateId: id,
   }).lean();
 
-  if (!cert) return Response.json({ valid: false });
-
-  return Response.json({ valid: true, cert });
+  return Response.json({
+    valid: Boolean(cert),
+    cert: cert ?? null,
+  });
 }
