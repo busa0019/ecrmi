@@ -1,24 +1,34 @@
+import { NextRequest, NextResponse } from "next/server";
 import { connectDB } from "@/lib/db";
 import Certificate from "@/models/Certificate";
 
 export async function GET(
-  _: Request,
+  request: NextRequest,
   { params }: { params: { id: string } }
 ) {
-  await connectDB();
+  try {
+    await connectDB();
 
-  const code = params.id.toUpperCase().trim();
+    const code = params.id.toUpperCase().trim();
 
-  const cert = await Certificate.findOne({
-    certificateId: code,
-  }).lean();
+    const cert = await Certificate.findOne({
+      certificateId: code,
+    }).lean();
 
-  if (!cert) {
-    return Response.json({ valid: false });
+    if (!cert) {
+      return NextResponse.json({ valid: false });
+    }
+
+    return NextResponse.json({
+      valid: true,
+      cert,
+    });
+  } catch (error) {
+    console.error("Verify certificate error:", error);
+
+    return NextResponse.json(
+      { valid: false, error: "Server error" },
+      { status: 500 }
+    );
   }
-
-  return Response.json({
-    valid: true,
-    cert,
-  });
 }
