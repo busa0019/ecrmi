@@ -1,11 +1,24 @@
 import { connectDB } from "@/lib/db";
 import Certificate from "@/models/Certificate";
 
-export async function GET(_: Request, { params }: any) {
+export async function GET(
+  _: Request,
+  { params }: { params: { id: string } }
+) {
   await connectDB();
-  const cert = await Certificate.findOne({ certificateId: params.id });
 
-  if (!cert) return Response.json({ valid: false });
+  const code = params.id.toUpperCase().trim();
 
-  return Response.json({ valid: true, cert });
+  const cert = await Certificate.findOne({
+    certificateId: code,
+  }).lean();
+
+  if (!cert) {
+    return Response.json({ valid: false });
+  }
+
+  return Response.json({
+    valid: true,
+    cert,
+  });
 }

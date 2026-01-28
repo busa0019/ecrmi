@@ -49,7 +49,7 @@ function drawWrappedCenteredText({
   maxWidth,
   font,
   size,
-  lineHeight = size + 6,
+  lineHeight = size + 8,
   pageWidth,
 }: {
   page: any;
@@ -71,7 +71,9 @@ function drawWrappedCenteredText({
 
     if (testWidth > maxWidth) {
       const x =
-        (pageWidth - font.widthOfTextAtSize(line.trim(), size)) / 2;
+        (pageWidth -
+          font.widthOfTextAtSize(line.trim(), size)) /
+        2;
 
       page.drawText(line.trim(), {
         x,
@@ -90,7 +92,9 @@ function drawWrappedCenteredText({
 
   if (line.trim()) {
     const x =
-      (pageWidth - font.widthOfTextAtSize(line.trim(), size)) / 2;
+      (pageWidth -
+        font.widthOfTextAtSize(line.trim(), size)) /
+      2;
 
     page.drawText(line.trim(), {
       x,
@@ -100,6 +104,8 @@ function drawWrappedCenteredText({
       color: rgb(0, 0, 0),
     });
   }
+
+  return cursorY;
 }
 
 /* ================= MAIN PDF ================= */
@@ -110,13 +116,14 @@ export async function generatePDF(
   certificateId: string
 ) {
   const pdf = await PDFDocument.create();
-  const page = pdf.addPage([842, 595]);
+  const page = pdf.addPage([842, 595]); // A4 Landscape
   const { width } = page.getSize();
 
   const regularFont = await pdf.embedFont(StandardFonts.Helvetica);
   const boldFont = await pdf.embedFont(StandardFonts.HelveticaBold);
 
-  /* ✅ Background */
+  /* ================= BACKGROUND ================= */
+
   const templatePath = path.join(
     process.cwd(),
     "public/certificate-template.jpg"
@@ -133,7 +140,6 @@ export async function generatePDF(
 
   /* ================= TEXT ================= */
 
-  // “This is to certify that”
   drawCenteredText({
     page,
     text: "This is to certify that",
@@ -143,7 +149,6 @@ export async function generatePDF(
     pageWidth: width,
   });
 
-  // NAME
   drawCenteredText({
     page,
     text: name.toUpperCase(),
@@ -153,7 +158,6 @@ export async function generatePDF(
     pageWidth: width,
   });
 
-  // underline
   page.drawLine({
     start: { x: 220, y: 320 },
     end: { x: 620, y: 320 },
@@ -161,7 +165,6 @@ export async function generatePDF(
     color: rgb(0, 0, 0),
   });
 
-  // “has successfully completed the course”
   drawCenteredText({
     page,
     text: "has successfully completed the course",
@@ -171,33 +174,52 @@ export async function generatePDF(
     pageWidth: width,
   });
 
-  // ✅ COURSE TITLE — BOLD
-  drawWrappedCenteredText({
+  /* ✅ COURSE TITLE (WRAPPED SAFELY) */
+  const afterCourseY = drawWrappedCenteredText({
     page,
     text: course,
     y: 265,
-    maxWidth: 600,
+    maxWidth: 620,
     font: boldFont,
-    size: 22,
+    size: 20,
     pageWidth: width,
   });
 
-  // ✅ OFFERED BY — BOLD
+  /* ✅ OFFERED BY (PUSHED DOWN) */
   drawCenteredText({
     page,
     text:
-      "Offered by : Emergency, Crisis & Disaster Risk Management Institute (ECRMI)",
-    y: 235,
-    size: 16,
+      "Offered by: Emergency, Crisis & Disaster Risk Management Institute (ECRMI)",
+    y: afterCourseY - 18,
+    size: 15,
     font: boldFont,
     pageWidth: width,
   });
 
-  // ✅ AWARDED ON — BOLD
+  /* ✅ AWARDED ON */
   drawCenteredText({
     page,
     text: `Awarded on: ${formatDate(new Date())}`,
-    y: 200,
+    y: afterCourseY - 42,
+    size: 14,
+    font: boldFont,
+    pageWidth: width,
+  });
+
+  /* ✅ CERTIFICATE VERIFICATION CODE (CENTERED, AFTER AWARD DATE) */
+  drawCenteredText({
+    page,
+    text: "Certificate Verification Code",
+    y: afterCourseY - 64,
+    size: 12,
+    font: boldFont,
+    pageWidth: width,
+  });
+
+  drawCenteredText({
+    page,
+    text: certificateId,
+    y: afterCourseY - 82,
     size: 14,
     font: boldFont,
     pageWidth: width,
@@ -205,10 +227,13 @@ export async function generatePDF(
 
   /* ================= QR CODE ================= */
 
-  const verifyUrl = `https://training.ecrmil.org/verify/${certificateId}`;
+  const verifyUrl = `https://training.ecrmi.org/verify/${certificateId}`;
   const qrDataUrl = await generateQR(verifyUrl);
 
-  const qrImageBytes = Buffer.from(qrDataUrl.split(",")[1], "base64");
+  const qrImageBytes = Buffer.from(
+    qrDataUrl.split(",")[1],
+    "base64"
+  );
   const qrImage = await pdf.embedPng(qrImageBytes);
 
   page.drawImage(qrImage, {

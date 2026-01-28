@@ -6,7 +6,35 @@ import Certificate from "@/models/Certificate";
 import Participant from "@/models/Participant";
 import { gradeTest } from "@/lib/grading";
 import { sendCertificateEmail } from "@/lib/email";
-import crypto from "crypto";
+
+/* ================= CERTIFICATE CODE GENERATOR ================= */
+
+function generateCertificateId({
+  courseTitle,
+  issuedAt,
+}: {
+  courseTitle: string;
+  issuedAt: Date;
+}) {
+  // Take first letters of up to 3 words in course title
+  const courseCode = courseTitle
+    .split(" ")
+    .slice(0, 3)
+    .map((w) => w[0])
+    .join("")
+    .toUpperCase();
+
+  const year = issuedAt.getFullYear().toString().slice(-2);
+
+  const random = Math.random()
+    .toString(36)
+    .substring(2, 6)
+    .toUpperCase();
+
+  return `ECRMI-${year}-${courseCode}-${random}`;
+}
+
+/* ================= POST ================= */
 
 export async function POST(req: Request) {
   try {
@@ -21,7 +49,7 @@ export async function POST(req: Request) {
 
     const email = participantEmail.toLowerCase().trim();
 
-    // ✅ LIMIT ATTEMPTS (MAX 3)
+    /* ===== LIMIT ATTEMPTS ===== */
     const attemptCount = await Attempt.countDocuments({
       participantEmail: email,
       courseId,
@@ -44,11 +72,11 @@ export async function POST(req: Request) {
       );
     }
 
-    // ✅ GRADE TEST
+    /* ===== GRADE ===== */
     const score = gradeTest(answers, questions);
     const passed = score >= course.passMark;
 
-    // ✅ SAVE ATTEMPT
+    /* ===== SAVE ATTEMPT ===== */
     const attempt = await Attempt.create({
       participantName,
       participantEmail: email,
@@ -60,9 +88,14 @@ export async function POST(req: Request) {
 
     let certificateId: string | null = null;
 
-    // ✅ CREATE CERTIFICATE ONLY ON PASS
+    /* ===== CREATE CERTIFICATE ===== */
     if (passed) {
-      certificateId = crypto.randomUUID();
+      const issuedAt = new Date();
+
+      certificateId = generateCertificateId({
+        courseTitle: course.title,
+        issuedAt,
+      });
 
       await Certificate.create({
         certificateId,
@@ -72,20 +105,20 @@ export async function POST(req: Request) {
         courseTitle: course.title,
         score,
         attemptId: attempt._id,
-        issuedAt: new Date(),
+        issuedAt,
       });
 
-      // ✅ LOCK NAME AFTER FIRST PASS
+      /* ===== LOCK NAME ===== */
       await Participant.findOneAndUpdate(
         { email },
         { nameLocked: true }
       );
 
-      // ✅ SEND CERTIFICATE EMAIL
+      /* ===== SEND EMAIL ===== */
       await sendCertificateEmail({
         to: email,
         name: participantName,
-        certificateUrl: `https://training.ecrmil.org/verify/${certificateId}`,
+        certificateUrl: `https://training.ecrmi.org/verify/${certificateId}`,
       });
     }
 

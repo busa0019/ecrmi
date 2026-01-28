@@ -10,33 +10,37 @@ export default function AdminTopbar() {
 
   return (
     <>
-      <header className="h-16 bg-white border-b flex items-center justify-between px-4 md:px-8">
-        <div className="flex items-center gap-3">
-          <button
-            className="md:hidden"
-            onClick={() => setOpen(true)}
-          >
-            <Menu className="w-6 h-6" />
-          </button>
-
-          <h2 className="text-lg font-semibold">
-            Admin Dashboard
-          </h2>
-        </div>
-
-        <div className="flex items-center gap-4 text-sm">
-          <Link
-            href="/"
-            className="text-slate-600 hover:text-slate-900"
-          >
-            View Site
-          </Link>
-
-          <form action="/api/auth/logout" method="POST">
-            <button className="text-red-600 hover:underline">
-              Logout
+      {/* FULL-WIDTH HEADER */}
+      <header className="h-16 bg-white border-b">
+        {/* ALIGNED INNER CONTENT */}
+        <div className="max-w-[1400px] mx-auto h-full flex items-center justify-between px-4 md:px-8">
+          <div className="flex items-center gap-3">
+            <button
+              className="md:hidden"
+              onClick={() => setOpen(true)}
+            >
+              <Menu className="w-6 h-6" />
             </button>
-          </form>
+
+            <h2 className="text-lg font-semibold">
+              Admin Dashboard
+            </h2>
+          </div>
+
+          <div className="flex items-center gap-4 text-sm">
+            <Link
+              href="/"
+              className="text-slate-600 hover:text-slate-900"
+            >
+              View Site
+            </Link>
+
+            <form action="/api/auth/logout" method="POST">
+              <button className="text-red-600 hover:underline">
+                Logout
+              </button>
+            </form>
+          </div>
         </div>
       </header>
 

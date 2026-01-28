@@ -17,95 +17,84 @@ export default async function CertificatesAdmin() {
 
   await connectDB();
 
-  const certificates = await Certificate.find().lean();
-  const courses = await Course.find().lean();
+  const certificates = await Certificate.find()
+    .sort({ createdAt: -1 })
+    .lean();
 
+  const courses = await Course.find().lean();
   const courseMap: Record<string, string> = {};
   courses.forEach((c: any) => {
     courseMap[c._id.toString()] = c.title;
   });
 
   return (
-    <main className="p-8 space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
+    <div className="space-y-6">
+      {/* HEADER */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <h1 className="text-2xl font-bold">
           Certificates
         </h1>
 
-        {/* CSV Export */}
-        <form
-          action="/api/admin/certificates/export"
-          method="GET"
-        >
-          <button className="px-4 py-2 border rounded-lg hover:bg-gray-50">
+        <form action="/api/admin/certificates/export" method="GET">
+          <button className="btn btn-outline">
             ⬇️ Export CSV
           </button>
         </form>
       </div>
 
-      {/* Table */}
-      <table className="w-full border bg-white text-sm">
-        <thead className="bg-gray-50">
-          <tr>
-            <th className="border p-2 text-left">Name</th>
-            <th className="border p-2 text-left">Email</th>
-            <th className="border p-2 text-left">Course</th>
-            <th className="border p-2 text-left">Issued</th>
-            <th className="border p-2 text-center">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {certificates.length === 0 ? (
-            <tr>
-              <td
-                colSpan={5}
-                className="p-6 text-center text-gray-500"
-              >
-                No certificates issued yet.
-              </td>
-            </tr>
-          ) : (
-            certificates.map((c: any) => (
-              <tr key={c._id.toString()}>
-                <td className="border p-2">
-                  {c.participantName || "—"}
-                </td>
-                <td className="border p-2">
-                  {c.participantEmail || "—"}
-                </td>
-                <td className="border p-2">
-                  {c.courseId
-                    ? courseMap[c.courseId.toString()] ||
-                      "Unknown course"
-                    : "—"}
-                </td>
-                <td className="border p-2">
-                  {c.createdAt
-                    ? new Date(c.createdAt).toLocaleDateString()
-                    : "—"}
-                </td>
-                <td className="border p-2 text-center">
-                  {/* ✅ REVOKE (NO onSubmit, NO JS) */}
-                  <form
-                    action="/api/admin/certificates/revoke"
-                    method="POST"
-                  >
-                    <input
-                      type="hidden"
-                      name="id"
-                      value={c._id.toString()}
-                    />
-                    <button className="text-red-600 text-sm hover:underline">
-                      Revoke
-                    </button>
-                  </form>
-                </td>
+      {/* TABLE */}
+      {certificates.length === 0 ? (
+        <div className="card text-center text-gray-500">
+          No certificates issued yet.
+        </div>
+      ) : (
+        <div className="bg-white border rounded-xl overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="border p-3 text-left">Name</th>
+                <th className="border p-3 text-left">Email</th>
+                <th className="border p-3 text-left">Course</th>
+                <th className="border p-3 text-left">Issued</th>
+                <th className="border p-3 text-center">Actions</th>
               </tr>
-            ))
-          )}
-        </tbody>
-      </table>
-    </main>
+            </thead>
+            <tbody>
+              {certificates.map((c: any) => (
+                <tr key={c._id.toString()} className="hover:bg-gray-50">
+                  <td className="border p-3 font-medium">
+                    {c.participantName || "—"}
+                  </td>
+                  <td className="border p-3 break-all text-slate-600">
+                    {c.participantEmail || "—"}
+                  </td>
+                  <td className="border p-3">
+                    {courseMap[c.courseId?.toString()] || "—"}
+                  </td>
+                  <td className="border p-3 text-slate-500">
+                    {c.createdAt?.toISOString().slice(0, 10)}
+                  </td>
+                  <td className="border p-3 text-center">
+                    <form
+                      action="/api/admin/certificates/revoke"
+                      method="POST"
+                    >
+                      <input
+                        type="hidden"
+                        name="id"
+                        value={c._id.toString()}
+                      />
+                      <button className="text-red-600 hover:underline text-sm">
+                        Revoke
+                      </button>
+                    </form>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
   );
 }

@@ -18,7 +18,7 @@ export default async function CoursesAdmin() {
 
   const coursesRaw = await Course.find().lean();
 
-  // ✅ SERIALIZE FOR CLIENT COMPONENTS
+  // ✅ SERIALIZE FOR CLIENT COMPONENTS (UNCHANGED)
   const courses = coursesRaw.map((c: any) => ({
     _id: c._id.toString(),
     title: c.title,
@@ -28,33 +28,41 @@ export default async function CoursesAdmin() {
   }));
 
   return (
-    <div className="space-y-8">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">
+    <div className="space-y-8 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+      {/* HEADER */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div className="space-y-1">
+          <h1 className="text-3xl font-bold tracking-tight">
             Course Management
           </h1>
-          <p className="text-gray-600">
+          <p className="text-sm sm:text-base text-gray-600">
             Create and manage your training courses
           </p>
         </div>
 
         <Link
           href="/admin/courses/new"
-          className="bg-teal-600 text-white px-4 py-2 rounded-lg"
+          className="btn btn-primary w-full sm:w-auto inline-flex items-center justify-center px-4 py-2 text-sm font-medium"
         >
           Create New Course
         </Link>
       </div>
 
-      <div className="space-y-4">
-        {courses.map((course) => (
-          <CourseCard
-            key={course._id}
-            course={course}
-          />
-        ))}
-      </div>
+      {/* COURSES GRID */}
+      {courses.length === 0 ? (
+        <div className="card text-center text-gray-500 border border-dashed rounded-xl py-16 px-6 bg-white/60">
+          No courses created yet.
+        </div>
+      ) : (
+       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 auto-rows-fr">
+          {courses.map((course) => (
+            <CourseCard
+              key={course._id}
+              course={course}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 }

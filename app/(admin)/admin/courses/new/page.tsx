@@ -39,13 +39,13 @@ export default function CreateCoursePage() {
   }
 
   return (
-    <div className="max-w-3xl bg-white border rounded-xl p-8 space-y-6">
-      <h1 className="text-2xl font-bold">
+    <div className="max-w-3xl mx-auto w-full bg-white border rounded-xl p-6 sm:p-8 space-y-6 shadow-sm mt-4 sm:mt-8">
+      <h1 className="text-2xl font-bold tracking-tight">
         Create New Course
       </h1>
 
       <input
-        className="w-full border p-2 rounded"
+        className="w-full border rounded-lg px-3 py-2 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-teal-500/60 focus:border-teal-500 transition"
         placeholder="Course title"
         value={title}
         onChange={(e) =>
@@ -54,7 +54,7 @@ export default function CreateCoursePage() {
       />
 
       <textarea
-        className="w-full border p-2 rounded"
+        className="w-full border rounded-lg px-3 py-2 text-sm sm:text-base min-h-[120px] resize-y focus:outline-none focus:ring-2 focus:ring-teal-500/60 focus:border-teal-500 transition"
         placeholder="Description"
         value={description}
         onChange={(e) =>
@@ -62,10 +62,10 @@ export default function CreateCoursePage() {
         }
       />
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <input
           type="number"
-          className="border p-2 rounded"
+          className="w-full border rounded-lg px-3 py-2 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-teal-500/60 focus:border-teal-500 transition"
           value={durationMinutes}
           onChange={(e) =>
             setDurationMinutes(
@@ -75,7 +75,7 @@ export default function CreateCoursePage() {
         />
         <input
           type="number"
-          className="border p-2 rounded"
+          className="w-full border rounded-lg px-3 py-2 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-teal-500/60 focus:border-teal-500 transition"
           value={passMark}
           onChange={(e) =>
             setPassMark(
@@ -85,11 +85,11 @@ export default function CreateCoursePage() {
         />
       </div>
 
-      <div className="flex gap-3">
+      <div className="flex flex-col-reverse sm:flex-row gap-3 sm:items-center">
         <button
           onClick={submit}
           disabled={loading}
-          className="bg-teal-600 text-white px-4 py-2 rounded"
+          className="w-full sm:w-auto bg-teal-600 hover:bg-teal-700 disabled:bg-teal-400 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
         >
           {loading ? "Creating..." : "Create Course"}
         </button>
@@ -98,7 +98,7 @@ export default function CreateCoursePage() {
           onClick={() =>
             router.push("/admin/courses")
           }
-          className="border px-4 py-2 rounded"
+          className="w-full sm:w-auto border px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors"
         >
           Cancel
         </button>

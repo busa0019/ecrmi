@@ -7,9 +7,8 @@ export default async function CoursesPage() {
 
   const coursesFromDb = await Course.find({ active: true }).lean();
 
-  // ✅ CONVERT TO PLAIN OBJECTS (VERY IMPORTANT)
   const courses = coursesFromDb.map((course: any) => ({
-    _id: course._id.toString(), // ✅ stringify ObjectId
+    _id: course._id.toString(),
     title: course.title,
     description: course.description,
     facilitator: course.facilitator,
@@ -28,22 +27,23 @@ export default async function CoursesPage() {
         to-white
       "
     >
-      {/* HEADER */}
+      {/* ===== HEADER ===== */}
       <section className="bg-white/80 backdrop-blur border-b">
-        <div className="max-w-7xl mx-auto px-6 py-16">
-          <h1 className="text-4xl md:text-5xl font-bold mb-4">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-10 sm:py-16">
+          <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-4">
             Available Training Programs
           </h1>
-          <p className="text-gray-600 max-w-3xl text-lg">
+
+          <p className="text-gray-600 max-w-3xl text-base sm:text-lg">
             Review course materials and complete assessments to earn your
             QR‑verified professional certificates.
           </p>
         </div>
       </section>
 
-      {/* COURSES */}
-      <section className="py-16">
-        <div className="max-w-7xl mx-auto px-6">
+      {/* ===== COURSES ===== */}
+      <section className="py-12 sm:py-16">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6">
           <CourseGrid courses={courses} />
         </div>
       </section>

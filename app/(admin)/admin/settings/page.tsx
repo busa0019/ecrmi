@@ -4,8 +4,10 @@ import { useState } from "react";
 
 export default function AdminSettings() {
   const [email, setEmail] = useState("");
-  const [currentPassword, setCurrentPassword] = useState("");
-  const [newPassword, setNewPassword] = useState("");
+  const [currentPassword, setCurrentPassword] =
+    useState("");
+  const [newPassword, setNewPassword] =
+    useState("");
   const [message, setMessage] = useState("");
 
   async function save() {
@@ -32,32 +34,36 @@ export default function AdminSettings() {
   }
 
   return (
-    <main className="max-w-xl p-8 space-y-6">
+    <div className="max-w-xl space-y-6">
       <h1 className="text-2xl font-bold">
         Admin Settings
       </h1>
 
       <input
-        className="w-full border p-2 rounded"
+        className="input"
         placeholder="New Email (optional)"
         value={email}
         onChange={(e) => setEmail(e.target.value)}
       />
 
       <input
-        className="w-full border p-2 rounded"
+        className="input"
         type="password"
         placeholder="Current Password"
         value={currentPassword}
-        onChange={(e) => setCurrentPassword(e.target.value)}
+        onChange={(e) =>
+          setCurrentPassword(e.target.value)
+        }
       />
 
       <input
-        className="w-full border p-2 rounded"
+        className="input"
         type="password"
         placeholder="New Password"
         value={newPassword}
-        onChange={(e) => setNewPassword(e.target.value)}
+        onChange={(e) =>
+          setNewPassword(e.target.value)
+        }
       />
 
       {message && (
@@ -66,10 +72,10 @@ export default function AdminSettings() {
 
       <button
         onClick={save}
-        className="bg-teal-600 text-white px-4 py-2 rounded"
+        className="btn btn-primary"
       >
         Save Changes
       </button>
-    </main>
+    </div>
   );
 }

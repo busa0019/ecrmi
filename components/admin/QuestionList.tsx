@@ -46,12 +46,12 @@ export default function QuestionList({
       {questions.map((q, index) => (
         <div
           key={q._id}
-          className="bg-white border rounded-xl p-4"
+          className="bg-white border rounded-xl p-4 sm:p-6 shadow-sm"
         >
           {editingId === q._id ? (
-            <div className="space-y-2">
+            <div className="space-y-3">
               <textarea
-                className="w-full border p-2"
+                className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-teal-500/60"
                 value={draft?.question}
                 onChange={(e) =>
                   setDraft({
@@ -64,7 +64,7 @@ export default function QuestionList({
               {draft?.options.map((opt, i) => (
                 <input
                   key={i}
-                  className="w-full border p-2"
+                  className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-teal-500/60"
                   value={opt}
                   onChange={(e) => {
                     const copy = [...draft.options];
@@ -78,7 +78,7 @@ export default function QuestionList({
               ))}
 
               <select
-                className="border p-2"
+                className="border rounded-lg px-3 py-2"
                 value={draft?.correctAnswer}
                 onChange={(e) =>
                   setDraft({
@@ -96,13 +96,13 @@ export default function QuestionList({
               <div className="flex gap-2">
                 <button
                   onClick={saveEdit}
-                  className="bg-teal-600 text-white px-3 py-1 rounded"
+                  className="bg-teal-600 text-white px-3 py-1 rounded-lg text-sm"
                 >
                   Save
                 </button>
                 <button
                   onClick={() => setEditingId(null)}
-                  className="border px-3 py-1 rounded"
+                  className="border px-3 py-1 rounded-lg text-sm"
                 >
                   Cancel
                 </button>
@@ -110,7 +110,7 @@ export default function QuestionList({
             </div>
           ) : (
             <>
-              <div className="flex justify-between">
+              <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
                 <p className="font-semibold">
                   Q{index + 1}: {q.question}
                 </p>
@@ -121,25 +121,25 @@ export default function QuestionList({
                       setEditingId(q._id);
                       setDraft(q);
                     }}
-                    className="text-blue-600"
+                    className="text-blue-600 hover:underline"
                   >
                     Edit
                   </button>
 
                   <button
                     onClick={() => deleteQuestion(q._id)}
-                    className="text-red-600"
+                    className="text-red-600 hover:underline"
                   >
                     Delete
                   </button>
                 </div>
               </div>
 
-              <ul className="grid grid-cols-2 gap-2 text-sm mt-2">
+              <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm mt-3">
                 {q.options.map((opt, i) => (
                   <li
                     key={i}
-                    className={`p-2 rounded ${
+                    className={`p-2 rounded-lg ${
                       q.correctAnswer === i
                         ? "bg-green-100 text-green-700"
                         : "bg-gray-100"

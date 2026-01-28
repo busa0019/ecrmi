@@ -53,20 +53,20 @@ export default async function ManageQuestions({
   }));
 
   return (
-    <div className="space-y-8">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">
+    <div className="space-y-8 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="space-y-1">
+          <h1 className="text-2xl font-bold tracking-tight">
             {course.title}
           </h1>
-          <p className="text-gray-600">
+          <p className="text-sm sm:text-base text-gray-600">
             Manage questions for this course
           </p>
         </div>
 
         <Link
           href="/admin/courses"
-          className="text-sm text-teal-600 underline"
+          className="text-sm text-teal-600 underline inline-flex items-center justify-end hover:text-teal-700 transition-colors"
         >
           ← Back to Courses
         </Link>

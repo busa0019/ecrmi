@@ -8,14 +8,8 @@ export default function QuestionForm({
   courseId: string;
 }) {
   const [question, setQuestion] = useState("");
-  const [options, setOptions] = useState([
-    "",
-    "",
-    "",
-    "",
-  ]);
-  const [correctAnswer, setCorrectAnswer] =
-    useState(0);
+  const [options, setOptions] = useState(["", "", "", ""]);
+  const [correctAnswer, setCorrectAnswer] = useState(0);
   const [loading, setLoading] = useState(false);
 
   async function submit() {
@@ -41,13 +35,13 @@ export default function QuestionForm({
   }
 
   return (
-    <div className="bg-white border rounded-xl p-6 space-y-4">
+    <div className="bg-white border rounded-xl p-6 sm:p-8 space-y-4 shadow-sm">
       <h2 className="text-lg font-semibold">
         Add New Question
       </h2>
 
       <textarea
-        className="w-full border p-2 rounded"
+        className="w-full border rounded-lg px-3 py-2 min-h-[90px] focus:outline-none focus:ring-2 focus:ring-teal-500/60 transition"
         placeholder="Question text"
         value={question}
         onChange={(e) => setQuestion(e.target.value)}
@@ -56,7 +50,7 @@ export default function QuestionForm({
       {options.map((opt, i) => (
         <input
           key={i}
-          className="w-full border p-2 rounded"
+          className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-teal-500/60 transition"
           placeholder={`Option ${i + 1}`}
           value={opt}
           onChange={(e) => {
@@ -68,30 +62,22 @@ export default function QuestionForm({
       ))}
 
       <select
-        className="w-full border p-2 rounded"
+        className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-teal-500/60 transition"
         value={correctAnswer}
         onChange={(e) =>
           setCorrectAnswer(Number(e.target.value))
         }
       >
-        <option value={0}>
-          Correct Answer: Option 1
-        </option>
-        <option value={1}>
-          Correct Answer: Option 2
-        </option>
-        <option value={2}>
-          Correct Answer: Option 3
-        </option>
-        <option value={3}>
-          Correct Answer: Option 4
-        </option>
+        <option value={0}>Correct Answer: Option 1</option>
+        <option value={1}>Correct Answer: Option 2</option>
+        <option value={2}>Correct Answer: Option 3</option>
+        <option value={3}>Correct Answer: Option 4</option>
       </select>
 
       <button
         onClick={submit}
         disabled={loading}
-        className="bg-teal-600 text-white px-4 py-2 rounded"
+        className="bg-teal-600 hover:bg-teal-700 disabled:bg-teal-400 text-white px-4 py-2 rounded-lg text-sm font-medium transition"
       >
         {loading ? "Saving..." : "Add Question"}
       </button>

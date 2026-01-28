@@ -70,13 +70,13 @@ export default async function AttemptsPage() {
   );
 
   return (
-    <main className="p-8 space-y-6">
-      <div className="flex items-center justify-between">
+    <main className="p-4 sm:p-6 lg:p-8 space-y-6">
+      {/* HEADER */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <h1 className="text-2xl font-bold">
           All Students
         </h1>
 
-        {/* ✅ Styled Export Button */}
         <form
           action="/api/admin/attempts/export"
           method="GET"
@@ -87,30 +87,57 @@ export default async function AttemptsPage() {
         </form>
       </div>
 
-      <table className="w-full border text-sm bg-white rounded-xl overflow-hidden">
-        <thead className="bg-gray-50">
-          <tr>
-            <th className="border p-3 text-left">Name</th>
-            <th className="border p-3 text-left">Email</th>
-            <th className="border p-3 text-left">Course</th>
-            <th className="border p-3">Score</th>
-            <th className="border p-3">Attempts</th>
-            <th className="border p-3">Status</th>
-            <th className="border p-3">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map((row) => (
-            <AttemptRow
-              key={
-                row.participantEmail +
-                row.courseId
-              }
-              attempt={row}
-            />
-          ))}
-        </tbody>
-      </table>
+      {/* TABLE */}
+      {rows.length === 0 ? (
+        <div className="bg-white border rounded-xl p-8 text-center text-gray-500">
+          Participants exist, but no assessments have been taken yet.
+        </div>
+      ) : (
+        <div className="overflow-x-auto bg-white border rounded-xl">
+          <table className="w-full text-sm">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="border p-3 text-left min-w-[160px]">
+                  Name
+                </th>
+                <th className="border p-3 text-left min-w-[220px]">
+                  Email
+                </th>
+                <th className="border p-3 text-left min-w-[260px]">
+                  Course
+                </th>
+                <th className="border p-3 text-center min-w-[80px]">
+                  Score
+                </th>
+                <th className="border p-3 text-center min-w-[100px]">
+                  Attempts
+                </th>
+                <th className="border p-3 text-center min-w-[120px]">
+                  Last Attempt
+                </th>
+                <th className="border p-3 text-center min-w-[100px]">
+                  Status
+                </th>
+                <th className="border p-3 text-center min-w-[120px]">
+                  Actions
+                </th>
+              </tr>
+            </thead>
+
+            <tbody>
+              {rows.map((row) => (
+                <AttemptRow
+                  key={
+                    row.participantEmail +
+                    row.courseId
+                  }
+                  attempt={row}
+                />
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
     </main>
   );
 }
