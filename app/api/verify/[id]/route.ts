@@ -4,12 +4,14 @@ import Certificate from "@/models/Certificate";
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     await connectDB();
 
-    const code = params.id.toUpperCase().trim();
+    const { id } = await params;
+
+    const code = id.toUpperCase().trim();
 
     const cert = await Certificate.findOne({
       certificateId: code,
