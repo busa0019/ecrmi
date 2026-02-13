@@ -1,9 +1,14 @@
 export const runtime = "nodejs";
 
 import { NextResponse } from "next/server";
-import path from "path";
-import fs from "fs/promises";
-import crypto from "crypto";
+import { v2 as cloudinary } from "cloudinary";
+
+/* ✅ Configure Cloudinary */
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
 
 export async function POST(req: Request) {
   const formData = await req.formData();
@@ -17,21 +22,31 @@ export async function POST(req: Request) {
   }
 
   const buffer = Buffer.from(await file.arrayBuffer());
-  const ext = path.extname(file.name);
-  const fileName =
-    crypto.randomBytes(8).toString("hex") + ext;
 
-  // ✅ Use /tmp in serverless environments
-  const uploadDir = path.join("/tmp", "uploads", "membership");
+  try {
+    const uploadResult = await new Promise<any>((resolve, reject) => {
+      cloudinary.uploader
+        .upload_stream(
+          {
+            folder: "ecrmi-membership",
+            resource_type: "auto", // supports pdf, images, etc.
+          },
+          (error, result) => {
+            if (error) reject(error);
+            else resolve(result);
+          }
+        )
+        .end(buffer);
+    });
 
-  await fs.mkdir(uploadDir, { recursive: true });
-
-  const filePath = path.join(uploadDir, fileName);
-
-  await fs.writeFile(filePath, buffer);
-
-  return NextResponse.json({
-    success: true,
-    url: `/uploads/membership/${fileName}`, // keep same response
-  });
+    return NextResponse.json({
+      success: true,
+      url: uploadResult.secure_url, // ✅ permanent public URL
+    });
+  } catch (error) {
+    return NextResponse.json(
+      { error: "Upload failed" },
+      { status: 500 }
+    );
+  }
 }
