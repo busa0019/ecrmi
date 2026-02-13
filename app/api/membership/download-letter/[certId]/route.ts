@@ -228,10 +228,12 @@ export async function GET(
 
   const pdfBytes = await pdfDoc.save();
 
-  return new NextResponse(pdfBytes, {
-    headers: {
-      "Content-Type": "application/pdf",
-      "Content-Disposition": `attachment; filename=letter-${certId}.pdf`,
-    },
-  });
+const buffer = Buffer.from(pdfBytes);
+
+return new NextResponse(buffer, {
+  headers: {
+    "Content-Type": "application/pdf",
+    "Content-Disposition": `attachment; filename=letter-${certId}.pdf`,
+  },
+});
 }
