@@ -15,10 +15,16 @@ export async function POST(req: Request) {
   }
 
   const buffer = Buffer.from(await file.arrayBuffer());
+
+  // ✅ FIX: explicitly type parsed records
   const records = parse(buffer.toString(), {
     columns: true,
     skip_empty_lines: true,
-  });
+  }) as {
+    fullName: string;
+    email: string;
+    membershipType: string;
+  }[];
 
   await connectDB();
 
