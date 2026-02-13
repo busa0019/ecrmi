@@ -38,13 +38,13 @@ export async function POST(
     );
   }
 
-  /* ✅ Generate certificate ID */
+  // ✅ Generate certificate ID
   const random4 = Math.floor(1000 + Math.random() * 9000);
   const certId = `ECRMI-MEM-${random4}`;
 
   const issuedAt = new Date();
 
-  /* ✅ ONLY SAVE NECESSARY FIELDS */
+  // ✅ Save only required fields
   app.certificateId = certId;
   app.reviewedAt = issuedAt;
 
