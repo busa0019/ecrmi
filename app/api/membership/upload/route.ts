@@ -3,7 +3,6 @@ export const runtime = "nodejs";
 import { NextResponse } from "next/server";
 import { v2 as cloudinary } from "cloudinary";
 
-/* ✅ Configure Cloudinary */
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
   api_key: process.env.CLOUDINARY_API_KEY,
@@ -29,7 +28,9 @@ export async function POST(req: Request) {
         .upload_stream(
           {
             folder: "ecrmi-membership",
-            resource_type: "raw", // supports pdf, images, etc.
+            resource_type: "raw",
+            use_filename: true,       // ✅ keep original name
+            unique_filename: true,    // ✅ avoid conflicts
           },
           (error, result) => {
             if (error) reject(error);
@@ -41,7 +42,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json({
       success: true,
-      url: uploadResult.secure_url, // ✅ permanent public URL
+      url: uploadResult.secure_url,
     });
   } catch (error) {
     return NextResponse.json(
