@@ -8,6 +8,7 @@ import {
   BarChart2,
   Award,
   Settings,
+  Users,
 } from "lucide-react";
 import clsx from "clsx";
 
@@ -23,6 +24,7 @@ const navItems: NavItem[] = [
   { label: "Attempts", path: "/admin/attempts", icon: FileCheck },
   { label: "Certificates", path: "/admin/certificates", icon: Award },
   { label: "Analytics", path: "/admin/analytics", icon: BarChart2 },
+  { label: "Memberships", path: "/admin/memberships", icon: Users },
   { label: "Settings", path: "/admin/settings", icon: Settings },
 ];
 

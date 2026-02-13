@@ -5,6 +5,8 @@ import Course from "@/models/Course";
 import Attempt from "@/models/Attempt";
 import Certificate from "@/models/Certificate";
 import Participant from "@/models/Participant";
+import Member from "@/models/Member";
+import MembershipApplication from "@/models/MembershipApplication";
 import {
   Users,
   BookOpen,
@@ -21,6 +23,13 @@ export default async function Dashboard() {
   const participants = await Participant.countDocuments();
   const courses = await Course.countDocuments();
   const certificates = await Certificate.countDocuments();
+  const members = await Member.countDocuments();
+
+  const pendingMemberships =
+    await MembershipApplication.countDocuments({
+      status: "pending",
+    });
+
   const attempts = await Attempt.find().lean();
 
   const passed = attempts.filter((a: any) => a.passed).length;
@@ -59,8 +68,8 @@ export default async function Dashboard() {
         </p>
       </div>
 
-      {/* STATS (CLICKABLE) */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+      {/* STATS */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-7 gap-4">
         <StatLink
           href="/admin/attempts"
           icon={Users}
@@ -92,6 +101,18 @@ export default async function Dashboard() {
           value={`${passRate}%`}
           highlight
         />
+        <StatLink
+          href="/admin/memberships"
+          icon={Users}
+          title="Members"
+          value={members}
+        />
+        <StatLink
+          href="/admin/memberships"
+          icon={AlertTriangle}
+          title="Pending Memberships"
+          value={pendingMemberships}
+        />
       </div>
 
       {/* INSIGHTS */}
@@ -114,7 +135,6 @@ export default async function Dashboard() {
             <EmptyState text="No attempts yet" />
           ) : (
             <>
-              {/* Mobile-first numbers */}
               <div className="flex justify-between text-sm sm:hidden">
                 <span className="text-green-700">
                   Passed: {passed}
@@ -186,10 +206,7 @@ export default async function Dashboard() {
               </thead>
               <tbody>
                 {recentFailures.map((a: any, i: number) => (
-                  <tr
-                    key={i}
-                    className="border-b last:border-b-0"
-                  >
+                  <tr key={i} className="border-b last:border-b-0">
                     <td className="py-2 px-2">
                       {a.participantName}
                     </td>
@@ -210,41 +227,19 @@ export default async function Dashboard() {
   );
 }
 
-/* ================= COMPONENTS ================= */
-
-function StatLink({
-  href,
-  icon: Icon,
-  title,
-  value,
-  highlight = false,
-}: {
-  href: string;
-  icon: any;
-  title: string;
-  value: string | number;
-  highlight?: boolean;
-}) {
+/* COMPONENTS */
+function StatLink({ href, icon: Icon, title, value, highlight = false }: any) {
   return (
     <Link
       href={href}
-      className="bg-white border rounded-2xl p-4 flex items-center gap-4
-                 hover:shadow-sm transition w-full"
+      className="bg-white border rounded-2xl p-4 flex items-center gap-4 hover:shadow-sm transition w-full"
     >
       <div className="p-3 rounded-xl bg-teal-50 text-teal-600">
         <Icon className="w-6 h-6" />
       </div>
       <div>
-        <p className="text-xs text-slate-500">
-          {title}
-        </p>
-        <p
-          className={`text-xl font-bold ${
-            highlight
-              ? "text-teal-600"
-              : "text-slate-900"
-          }`}
-        >
+        <p className="text-xs text-slate-500">{title}</p>
+        <p className={`text-xl font-bold ${highlight ? "text-teal-600" : "text-slate-900"}`}>
           {value}
         </p>
       </div>
@@ -252,50 +247,22 @@ function StatLink({
   );
 }
 
-function Insight({
-  icon: Icon,
-  title,
-  value,
-  note,
-  color = "slate",
-}: {
-  icon: any;
-  title: string;
-  value: string | number;
-  note: string;
-  color?: "slate" | "red";
-}) {
+function Insight({ icon: Icon, title, value, note, color = "slate" }: any) {
   return (
     <div className="bg-white border rounded-2xl p-6">
       <div className="flex items-center gap-3 mb-2">
-        <Icon
-          className={`w-5 h-5 ${
-            color === "red"
-              ? "text-red-600"
-              : "text-slate-600"
-          }`}
-        />
-        <p className="text-sm text-slate-500">
-          {title}
-        </p>
+        <Icon className={`w-5 h-5 ${color === "red" ? "text-red-600" : "text-slate-600"}`} />
+        <p className="text-sm text-slate-500">{title}</p>
       </div>
-      <p
-        className={`text-2xl font-bold ${
-          color === "red"
-            ? "text-red-600"
-            : "text-slate-900"
-        }`}
-      >
+      <p className={`text-2xl font-bold ${color === "red" ? "text-red-600" : "text-slate-900"}`}>
         {value}
       </p>
-      <p className="text-xs text-slate-500 mt-1">
-        {note}
-      </p>
+      <p className="text-xs text-slate-500 mt-1">{note}</p>
     </div>
   );
 }
 
-function EmptyState({ text }: { text: string }) {
+function EmptyState({ text }: any) {
   return (
     <div className="flex flex-col items-center justify-center py-10 text-slate-500">
       <AlertTriangle className="w-8 h-8 mb-2 opacity-40" />
