@@ -23,28 +23,23 @@ export async function POST(req: Request) {
   const buffer = Buffer.from(await file.arrayBuffer());
 
   try {
-    const uploadResult = await new Promise<any>((resolve, reject) => {
-      cloudinary.uploader
-        .upload_stream(
-          {
-            folder: "ecrmi-membership",
-            resource_type: "raw",
-            use_filename: true,       // ✅ keep original name
-            unique_filename: true,    // ✅ avoid conflicts
-          },
-          (error, result) => {
-            if (error) reject(error);
-            else resolve(result);
-          }
-        )
-        .end(buffer);
-    });
+    const uploadResult = await cloudinary.uploader.upload(
+      `data:${file.type};base64,${buffer.toString("base64")}`,
+      {
+        folder: "ecrmi-membership",
+        resource_type: "raw",
+        use_filename: true,
+        unique_filename: true,
+      }
+    );
 
     return NextResponse.json({
       success: true,
       url: uploadResult.secure_url,
     });
   } catch (error) {
+    console.error("Cloudinary upload error:", error);
+
     return NextResponse.json(
       { error: "Upload failed" },
       { status: 500 }
