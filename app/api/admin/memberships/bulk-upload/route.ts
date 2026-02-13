@@ -16,15 +16,13 @@ export async function POST(req: Request) {
 
   const buffer = Buffer.from(await file.arrayBuffer());
 
-  // ✅ FIX: explicitly type parsed records
-  const records = parse(buffer.toString(), {
+  // ✅ PROPER GENERIC TYPE FIX
+  const records = parse<
+    { fullName: string; email: string; membershipType: string }
+  >(buffer.toString(), {
     columns: true,
     skip_empty_lines: true,
-  }) as {
-    fullName: string;
-    email: string;
-    membershipType: string;
-  }[];
+  });
 
   await connectDB();
 
@@ -32,11 +30,8 @@ export async function POST(req: Request) {
     await MembershipApplication.create({
       fullName: row.fullName,
       email: row.email,
-
-      // ✅ FIXED
       requestedMembershipType: row.membershipType,
       approvedMembershipType: row.membershipType,
-
       status: "approved",
       reviewedAt: new Date(),
     });
