@@ -29,7 +29,7 @@ export async function POST(req: Request) {
         .upload_stream(
           {
             folder: "ecrmi-membership",
-            resource_type: "auto", // supports pdf, images, etc.
+            resource_type: "raw", // supports pdf, images, etc.
           },
           (error, result) => {
             if (error) reject(error);

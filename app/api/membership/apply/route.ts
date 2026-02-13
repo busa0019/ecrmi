@@ -32,9 +32,9 @@ export async function POST(req: Request) {
 
     // Documents
     cvUrl: data.cvUrl,
-    certificateUrls: data.certificatesUrl
-      ? [data.certificatesUrl]
-      : [],
+  certificatesUrl: data.certificatesUrl
+  ? [data.certificatesUrl]
+  : [],
     paymentReceiptUrl: data.paymentReceiptUrl,
 
     status: "pending",
