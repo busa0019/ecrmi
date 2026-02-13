@@ -62,7 +62,10 @@ export async function GET(
 
   await archive.finalize();
 
-  await new Promise((resolve) => output.on("close", resolve));
+  await new Promise<void>((resolve, reject) => {
+  output.on("close", () => resolve());
+  output.on("error", (err) => reject(err));
+});
 
   const zipBuffer = fs.readFileSync(tempZipPath);
 
