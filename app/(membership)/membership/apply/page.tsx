@@ -47,18 +47,27 @@ export default function MembershipApplyPage() {
   });
 
   /* ================= FILE UPLOAD ================= */
-  async function uploadFile(file: File) {
-    const data = new FormData();
-    data.append("file", file);
+async function uploadFile(file: File) {
+  const formData = new FormData();
+  formData.append("file", file);
+  formData.append("upload_preset", "ecrmi_unsigned");
 
-    const res = await fetch("/api/membership/upload", {
+  const res = await fetch(
+    `https://api.cloudinary.com/v1_1/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/raw/upload`,
+    {
       method: "POST",
-      body: data,
-    });
+      body: formData,
+    }
+  );
 
-    const json = await res.json();
-    return json.url as string;
+  const data = await res.json();
+
+  if (!data.secure_url) {
+    throw new Error("Upload failed");
   }
+
+  return data.secure_url;
+}
 
   /* ================= NAVIGATION ================= */
   function next() {
