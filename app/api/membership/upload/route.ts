@@ -1,3 +1,5 @@
+export const runtime = "nodejs";
+
 import { NextResponse } from "next/server";
 import path from "path";
 import fs from "fs/promises";
@@ -8,7 +10,10 @@ export async function POST(req: Request) {
   const file = formData.get("file") as File;
 
   if (!file) {
-    return NextResponse.json({ error: "No file uploaded" }, { status: 400 });
+    return NextResponse.json(
+      { error: "No file uploaded" },
+      { status: 400 }
+    );
   }
 
   const buffer = Buffer.from(await file.arrayBuffer());
@@ -16,18 +21,17 @@ export async function POST(req: Request) {
   const fileName =
     crypto.randomBytes(8).toString("hex") + ext;
 
-  const uploadDir = path.join(
-    process.cwd(),
-    "public/uploads/membership"
-  );
+  // ✅ Use /tmp in serverless environments
+  const uploadDir = path.join("/tmp", "uploads", "membership");
 
   await fs.mkdir(uploadDir, { recursive: true });
 
   const filePath = path.join(uploadDir, fileName);
+
   await fs.writeFile(filePath, buffer);
 
   return NextResponse.json({
     success: true,
-    url: `/uploads/membership/${fileName}`,
+    url: `/uploads/membership/${fileName}`, // keep same response
   });
 }
