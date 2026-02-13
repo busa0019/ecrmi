@@ -8,12 +8,12 @@ import path from "path";
 import { NextResponse } from "next/server";
 
 export async function GET(
-  req: Request,
+  _req: Request,
   context: { params: Promise<{ id: string }> }
 ) {
   await connectDB();
 
-  // ✅ FIX: unwrap params properly
+  // ✅ Unwrap params (Next.js 15+)
   const { id } = await context.params;
 
   const app = await MembershipApplication.findById(id);
@@ -27,16 +27,18 @@ export async function GET(
 
   const archive = archiver("zip", { zlib: { level: 9 } });
 
+  // ✅ Use /tmp for Vercel (NOT public folder)
   const tempZipPath = path.join(
-    process.cwd(),
-    "public",
+    "/tmp",
     `temp-${id}.zip`
   );
 
   const output = fs.createWriteStream(tempZipPath);
+
   archive.pipe(output);
 
-  // ✅ ADD FILES IF THEY EXIST
+  /* ================= ADD FILES ================= */
+
   if (app.cvUrl) {
     const cvPath = path.join(process.cwd(), "public", app.cvUrl);
     if (fs.existsSync(cvPath)) {
@@ -48,28 +50,38 @@ export async function GET(
     app.certificatesUrl.forEach((file: string, index: number) => {
       const filePath = path.join(process.cwd(), "public", file);
       if (fs.existsSync(filePath)) {
-        archive.file(filePath, { name: `certificate-${index + 1}` });
+        archive.file(filePath, {
+          name: `certificate-${index + 1}.pdf`,
+        });
       }
     });
   }
 
   if (app.paymentReceiptUrl) {
-    const receiptPath = path.join(process.cwd(), "public", app.paymentReceiptUrl);
+    const receiptPath = path.join(
+      process.cwd(),
+      "public",
+      app.paymentReceiptUrl
+    );
     if (fs.existsSync(receiptPath)) {
-      archive.file(receiptPath, { name: "payment-receipt" });
+      archive.file(receiptPath, {
+        name: "payment-receipt.pdf",
+      });
     }
   }
 
   await archive.finalize();
 
+  // ✅ Proper Promise handling for Vercel build
   await new Promise<void>((resolve, reject) => {
-  output.on("close", () => resolve());
-  output.on("error", (err) => reject(err));
-});
+    output.on("close", () => resolve());
+    output.on("error", (err) => reject(err));
+  });
 
   const zipBuffer = fs.readFileSync(tempZipPath);
 
-  fs.unlinkSync(tempZipPath); // delete temp file
+  // ✅ Clean up temp file
+  fs.unlinkSync(tempZipPath);
 
   return new NextResponse(zipBuffer, {
     headers: {
