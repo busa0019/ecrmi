@@ -52,7 +52,7 @@ export default function AdminSidebar() {
           return (
             <button
               key={path}
-              onClick={() => router.push(path)}
+            onClick={() => router.push(path as any)}
               className={clsx(
                 "relative w-full flex items-center gap-3 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200",
                 active
