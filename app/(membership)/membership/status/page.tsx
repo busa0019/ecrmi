@@ -80,9 +80,10 @@ export default function MembershipStatusPage() {
                   {data.membershipType}
                 </p>
 
-                {data.certificateUrl && (
+                {/* ✅ UPDATED CERTIFICATE DOWNLOAD */}
+                {data.certificateId && (
                   <a
-                    href={data.certificateUrl}
+                    href={`/api/membership/download/${data.certificateId}`}
                     target="_blank"
                     rel="noreferrer"
                     className="btn btn-primary w-full"
@@ -91,9 +92,10 @@ export default function MembershipStatusPage() {
                   </a>
                 )}
 
-                {data.letterUrl && (
+                {/* ✅ OPTIONAL: dynamic letter route if created */}
+                {data.certificateId && (
                   <a
-                    href={data.letterUrl}
+                    href={`/api/membership/download-letter/${data.certificateId}`}
                     target="_blank"
                     rel="noreferrer"
                     className="btn btn-outline w-full"
@@ -119,14 +121,12 @@ export default function MembershipStatusPage() {
         )}
 
         <p className="text-sm text-gray-600">
-  Existing member?{" "}
-  <a href="/membership/update" className="text-blue-600 underline">
-    Update your membership here
-  </a>
-</p>
+          Existing member?{" "}
+          <a href="/membership/update" className="text-blue-600 underline">
+            Update your membership here
+          </a>
+        </p>
       </div>
-
-      
     </main>
   );
 }

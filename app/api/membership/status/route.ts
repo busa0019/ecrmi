@@ -28,7 +28,7 @@ export async function GET(req: Request) {
       app.approvedMembershipType || app.requestedMembershipType,
 
    
-    certificateUrl: app.certificateUrl || null,
-    letterUrl: app.letterUrl || null,
+    certificateId: app.certificateId || null,
+    letterId: app.letterId || null,
   });
 }
