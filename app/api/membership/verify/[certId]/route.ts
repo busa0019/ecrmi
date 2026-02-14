@@ -2,27 +2,40 @@ import { connectDB } from "@/lib/db";
 import MembershipApplication from "@/models/MembershipApplication";
 import { NextResponse } from "next/server";
 
+export const runtime = "nodejs"; // recommended for mongoose
+
 export async function GET(
   _req: Request,
-  { params }: { params: Promise<{ certId: string }> }
+  { params }: { params: { certId: string } }
 ) {
-  await connectDB();
+  try {
+    await connectDB();
 
-  const { certId } = await params;  // ✅ unwrap properly
+    const { certId } = params;
 
-  const record = await MembershipApplication.findOne({
-    certificateId: certId,
-    status: "approved",
-  });
+    const record = await MembershipApplication.findOne({
+      certificateId: certId,
+      status: "approved",
+    }).lean();
 
-  if (!record) {
-    return NextResponse.json({ valid: false });
+    if (!record) {
+      return NextResponse.json({ valid: false }, { status: 200 });
+    }
+
+    return NextResponse.json(
+      {
+        valid: true,
+        name: record.fullName,
+        membershipType: record.approvedMembershipType,
+        issuedAt: record.reviewedAt ?? record.updatedAt ?? record.createdAt,
+      },
+      { status: 200 }
+    );
+  } catch (error) {
+    console.error("Verify membership error:", error);
+    return NextResponse.json(
+      { valid: false, error: "Server error" },
+      { status: 500 }
+    );
   }
-
-  return NextResponse.json({
-    valid: true,
-    name: record.fullName,
-    membershipType: record.approvedMembershipType,
-    issuedAt: record.reviewedAt,
-  });
 }

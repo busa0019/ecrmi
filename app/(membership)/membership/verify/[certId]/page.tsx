@@ -1,39 +1,17 @@
 import Image from "next/image";
-import { headers } from "next/headers";
+import { verifyMembership } from "@/lib/verifyMembership";
 
-export const dynamic = "force-dynamic"; // important: page depends on request headers
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
 export default async function VerifyMembershipPage({
   params,
 }: {
-  params: { certId: string }; // params is NOT a Promise in page.tsx
+  params: { certId: string };
 }) {
   const { certId } = params;
 
-  const headersList = await headers(); // ✅ MUST await
-  const host =
-    headersList.get("x-forwarded-host") ?? headersList.get("host");
-  const protocol =
-    headersList.get("x-forwarded-proto") ??
-    (host?.includes("localhost") ? "http" : "https");
-
-  if (!host) {
-    throw new Error("Unable to determine host for verification request.");
-  }
-
-  const baseUrl = `${protocol}://${host}`;
-
-  const res = await fetch(
-    `${baseUrl}/api/membership/verify/${encodeURIComponent(certId)}`,
-    { cache: "no-store" }
-  );
-
-  if (!res.ok) {
-    // Avoid “Application error” with empty JSON, etc.
-    throw new Error(`Verify API failed: ${res.status} ${res.statusText}`);
-  }
-
-  const data = await res.json();
+  const data = await verifyMembership(certId);
 
   return (
     <main className="min-h-screen flex items-center justify-center bg-slate-50 px-4">
@@ -49,13 +27,7 @@ export default async function VerifyMembershipPage({
         {data.valid ? (
           <>
             <div className="w-24 h-24 mx-auto mb-6 flex items-center justify-center rounded-full bg-green-100 animate-pulse">
-              <svg
-                className="w-12 h-12 text-green-600"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="3"
-                viewBox="0 0 24 24"
-              >
+              <svg className="w-12 h-12 text-green-600" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
               </svg>
             </div>
@@ -67,7 +39,10 @@ export default async function VerifyMembershipPage({
             <div className="bg-gray-100 rounded-xl p-6 text-left space-y-2">
               <p><strong>Member Name:</strong> {data.name}</p>
               <p><strong>Membership Type:</strong> {data.membershipType}</p>
-              <p><strong>Date Issued:</strong> {new Date(data.issuedAt).toDateString()}</p>
+              <p>
+                <strong>Date Issued:</strong>{" "}
+                {data.issuedAt ? new Date(data.issuedAt).toDateString() : "—"}
+              </p>
               <p><strong>Verification Code:</strong> {certId}</p>
             </div>
           </>
