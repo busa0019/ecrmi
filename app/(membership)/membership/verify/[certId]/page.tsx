@@ -3,13 +3,23 @@ import { verifyMembership } from "@/lib/verifyMembership";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
+function normalizeCertId(input: string) {
+  // decode + trim + remove invisible characters that often come from QR/Copy-Paste
+  return decodeURIComponent(String(input ?? ""))
+    .trim()
+    .replace(/[\u200B-\u200D\uFEFF]/g, "");
+}
 
 export default async function VerifyMembershipPage({
   params,
 }: {
-  params: { certId: string };
+  params: { certId: string } | Promise<{ certId: string }>;
 }) {
-  const { certId } = params;
+  const { certId: rawCertId } = await Promise.resolve(params);
+
+  const certId = normalizeCertId(rawCertId);
 
   const data = await verifyMembership(certId);
 
@@ -60,6 +70,12 @@ export default async function VerifyMembershipPage({
             <p className="text-gray-600">
               This membership certificate could not be verified.
             </p>
+
+            {/* TEMP DEBUG (remove after confirmed) */}
+            <div className="mt-4 text-xs text-gray-400 text-left bg-gray-50 p-3 rounded">
+              <div><strong>Debug raw certId:</strong> {String(rawCertId)}</div>
+              <div><strong>Debug normalized certId:</strong> {String(certId)}</div>
+            </div>
           </>
         )}
       </div>
