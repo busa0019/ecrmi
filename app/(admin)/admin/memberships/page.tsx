@@ -3,13 +3,21 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 
+type LastImportInfo = {
+  importTag: string;
+  created: number;
+  skipped: number;
+  at: string; // ISO
+};
+
 export default function AdminMembershipsPage() {
   const [applications, setApplications] = useState<any[]>([]);
   const [updates, setUpdates] = useState<any[]>([]);
   const [members, setMembers] = useState<any[]>([]);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
-  const [migrating, setMigrating] = useState(false);
+
+  const [lastImport, setLastImport] = useState<LastImportInfo | null>(null);
 
   const lower = (v: any) => String(v ?? "").toLowerCase();
 
@@ -40,6 +48,14 @@ export default function AdminMembershipsPage() {
   }
 
   useEffect(() => {
+    // Load last import info for Undo button
+    const saved = localStorage.getItem("ecrmi_lastImport");
+    if (saved) {
+      try {
+        setLastImport(JSON.parse(saved));
+      } catch {}
+    }
+
     loadAll();
   }, []);
 
@@ -163,7 +179,7 @@ export default function AdminMembershipsPage() {
         </div>
       </div>
 
-      {/* CSV UPLOAD + MIGRATION */}
+      {/* CSV UPLOAD + UNDO LAST IMPORT */}
       <div className="bg-white border rounded-xl p-6 space-y-3">
         <h3 className="font-semibold mb-2">Bulk Upload Existing Members</h3>
 
@@ -188,54 +204,71 @@ export default function AdminMembershipsPage() {
               return;
             }
 
-            alert(
-              `Upload complete.\nCreated: ${data.created}\nSkipped: ${data.skipped}`
-            );
+            const info: LastImportInfo = {
+              importTag: String(data.importTag || ""),
+              created: Number(data.created || 0),
+              skipped: Number(data.skipped || 0),
+              at: new Date().toISOString(),
+            };
+
+            localStorage.setItem("ecrmi_lastImport", JSON.stringify(info));
+            setLastImport(info);
+
+            alert(`Upload complete.\nCreated: ${info.created}\nSkipped: ${info.skipped}`);
 
             await loadAll();
             e.currentTarget.value = "";
           }}
         />
 
-        <button
-          className="btn btn-outline"
-          disabled={migrating}
-          onClick={async () => {
-            const ok = confirm(
-              "Run migration now? This will create/update Members from approved applications."
-            );
-            if (!ok) return;
+        {lastImport && (
+          <div className="text-sm text-slate-600 space-y-2">
+            <p>
+              <strong>Last CSV import:</strong>{" "}
+              {new Date(lastImport.at).toLocaleString()} —{" "}
+              <strong>{lastImport.created}</strong> imported
+            </p>
 
-            setMigrating(true);
-            try {
-              const res = await fetch(
-                "/api/admin/memberships/migrate-to-members",
-                { method: "POST" }
-              );
-              const data = await res.json();
+            <button
+              className="btn btn-outline"
+              onClick={async () => {
+                const ok = confirm(
+                  `Undo last CSV import?\n\nThis will delete ${lastImport.created} imported record(s).`
+                );
+                if (!ok) return;
 
-              if (!res.ok) {
-                alert(data?.error || "Migration failed");
-                return;
-              }
+                const res = await fetch("/api/admin/memberships/bulk-delete", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ importTag: lastImport.importTag }),
+                });
 
-              alert(
-                `Migration complete.\nCreated: ${data.created}\nUpdated: ${data.updated}\nSkipped: ${data.skipped}`
-              );
+                const data = await res.json();
 
-              await loadAll();
-            } finally {
-              setMigrating(false);
-            }
-          }}
-        >
-          {migrating ? "Migrating..." : "Run Members Migration"}
-        </button>
+                if (!res.ok) {
+                  alert(data?.error || "Undo failed");
+                  return;
+                }
+
+                alert(`Deleted ${data.deleted} record(s).`);
+
+                localStorage.removeItem("ecrmi_lastImport");
+                setLastImport(null);
+
+                await loadAll();
+              }}
+            >
+              Undo Last CSV Import
+            </button>
+          </div>
+        )}
       </div>
 
       {/* MEMBERS LIST (new) */}
       <div>
-        <h1 className="text-2xl font-bold mb-4">Members (from Members collection)</h1>
+        <h1 className="text-2xl font-bold mb-4">
+          Members (from Members collection)
+        </h1>
 
         <div className="bg-white border rounded-xl overflow-hidden">
           <table className="w-full text-sm">
