@@ -109,36 +109,39 @@ export default function AdminMembershipReviewPage() {
       <div className="bg-white border rounded-xl p-6 space-y-4">
         <h2 className="font-semibold">Submitted Documents</h2>
 
-        {app.cvUrl && (
-          <a
-            href={app.cvUrl}
-            target="_blank"
-            className="text-blue-600 underline block"
-          >
-            View CV
-          </a>
-        )}
+      {app.cvUrl && (
+  <a
+    href={`${app.cvUrl}?fl_attachment=false`}
+    target="_blank"
+    rel="noreferrer"
+    className="text-blue-600 underline block"
+  >
+    View CV
+  </a>
+)}
 
-        {app.certificatesUrl?.map((url: string, i: number) => (
-          <a
-            key={i}
-            href={url}
-            target="_blank"
-            className="text-blue-600 underline block"
-          >
-            View Certificate {i + 1}
-          </a>
-        ))}
+{app.certificatesUrl?.map((url: string, i: number) => (
+  <a
+    key={i}
+    href={`${url}?fl_attachment=false`}
+    target="_blank"
+    rel="noreferrer"
+    className="text-blue-600 underline block"
+  >
+    View Certificate {i + 1}
+  </a>
+))}
 
-        {app.paymentReceiptUrl && (
-          <a
-            href={app.paymentReceiptUrl}
-            target="_blank"
-            className="text-blue-600 underline block"
-          >
-            View Payment Receipt
-          </a>
-        )}
+{app.paymentReceiptUrl && (
+  <a
+    href={`${app.paymentReceiptUrl}?fl_attachment=false`}
+    target="_blank"
+    rel="noreferrer"
+    className="text-blue-600 underline block"
+  >
+    View Payment Receipt
+  </a>
+)}
 
         {/* ZIP DOWNLOAD */}
         <div className="pt-4">
