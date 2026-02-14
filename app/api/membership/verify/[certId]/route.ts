@@ -12,10 +12,21 @@ export async function GET(
   try {
     await connectDB();
 
-    const { certId } = await params; // ✅ keep this for your Next.js typing
+    const { certId } = await params;
+
+    // ✅ HARD GUARD: prevent undefined/empty certId from matching random records
+    if (!certId || typeof certId !== "string" || certId.trim().length < 3) {
+      return NextResponse.json(
+        { valid: false, error: "Missing certificate ID" },
+        { status: 400 }
+      );
+    }
+
+    // Optional: log to confirm what you’re receiving
+    // console.log("VERIFY certId:", certId);
 
     const record = await MembershipApplication.findOne({
-      certificateId: certId,
+      certificateId: certId.trim(),
       status: "approved",
     }).lean();
 
@@ -29,6 +40,7 @@ export async function GET(
         name: record.fullName,
         membershipType: record.approvedMembershipType,
         issuedAt: record.reviewedAt ?? record.updatedAt ?? record.createdAt,
+        certificateId: record.certificateId, // ✅ include for debugging/display if you want
       },
       { status: 200 }
     );
