@@ -69,7 +69,7 @@ export default async function Dashboard() {
       </div>
 
       {/* STATS */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-7 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-7 gap-4">
         <StatLink
           href="/admin/attempts"
           icon={Users}
@@ -232,14 +232,19 @@ function StatLink({ href, icon: Icon, title, value, highlight = false }: any) {
   return (
     <Link
       href={href}
-      className="bg-white border rounded-2xl p-4 flex items-center gap-4 hover:shadow-sm transition w-full"
+      className="bg-white border rounded-2xl p-4 flex items-center gap-4 hover:shadow-sm transition w-full min-w-0"
     >
-      <div className="p-3 rounded-xl bg-teal-50 text-teal-600">
+      <div className="p-3 rounded-xl bg-teal-50 text-teal-600 shrink-0">
         <Icon className="w-6 h-6" />
       </div>
-      <div>
-        <p className="text-xs text-slate-500">{title}</p>
-        <p className={`text-xl font-bold ${highlight ? "text-teal-600" : "text-slate-900"}`}>
+
+      <div className="min-w-0">
+        <p className="text-xs text-slate-500 truncate">{title}</p>
+        <p
+          className={`text-xl font-bold ${
+            highlight ? "text-teal-600" : "text-slate-900"
+          }`}
+        >
           {value}
         </p>
       </div>

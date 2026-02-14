@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { CheckCircle, AlertTriangle } from "lucide-react";
+import { CheckCircle, AlertTriangle, X } from "lucide-react";
 
 const steps = [
   "Personal Information",
@@ -17,10 +17,15 @@ const MEMBERSHIP_TYPES = [
   "Graduate Member",
   "Associate Member",
   "Technical Member",
-  "Professional Member",
+  "Professional Fellow",
   "Fellow",
   "Honorary Member",
 ];
+
+function isValidEmail(email: string) {
+  // simple + practical validation
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
+}
 
 export default function MembershipApplyPage() {
   const [step, setStep] = useState(0);
@@ -28,54 +33,74 @@ export default function MembershipApplyPage() {
   const [error, setError] = useState("");
   const [uploading, setUploading] = useState(false);
 
-  const [form, setForm] = useState<any>({
+  const [form, setForm] = useState({
     fullName: "",
     email: "",
-    nationality: "",
-    state: "",
     dob: "",
     membershipType: "",
     jobTitle: "",
     organization: "",
-    natureOfWork: "",
-    yearsOfExperience: "",
-    passportPhotoUrl: "",
+
+    // uploads
     cvUrl: "",
     certificateUrls: [] as string[],
     paymentReceiptUrl: "",
+
     declaration: false,
   });
 
   /* ================= FILE UPLOAD ================= */
-async function uploadFile(file: File) {
-  const formData = new FormData();
-  formData.append("file", file);
-  formData.append("upload_preset", "ecrmi_unsigned");
+  async function uploadFile(file: File) {
+    const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
 
-  const res = await fetch(
-    `https://api.cloudinary.com/v1_1/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/raw/upload`,
-    {
-      method: "POST",
-      body: formData,
+    if (!cloudName) {
+      throw new Error("Missing NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME");
     }
-  );
 
-  const data = await res.json();
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("upload_preset", "ecrmi_unsigned");
 
-  if (!data.secure_url) {
-    throw new Error("Upload failed");
+    const res = await fetch(
+      `https://api.cloudinary.com/v1_1/${cloudName}/auto/upload`,
+      {
+        method: "POST",
+        body: formData,
+      }
+    );
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      console.error("Cloudinary upload failed:", data);
+      throw new Error(data?.error?.message || "Upload failed");
+    }
+
+    if (!data.secure_url) {
+      console.error("Cloudinary response missing secure_url:", data);
+      throw new Error("Upload failed");
+    }
+
+    return data.secure_url as string;
   }
-
-  return data.secure_url;
-}
 
   /* ================= NAVIGATION ================= */
   function next() {
     setError("");
 
-    if (step === 0 && (!form.fullName || !form.email)) {
-      setError("Full name and email are required.");
-      return;
+    if (step === 0) {
+      if (!form.fullName.trim()) {
+        setError("Full name is required.");
+        return;
+      }
+      if (!form.email.trim()) {
+        setError("Email is required.");
+        return;
+      }
+      if (!isValidEmail(form.email)) {
+        setError("Please enter a valid email address.");
+        return;
+      }
     }
 
     if (step === 1 && !form.membershipType) {
@@ -83,30 +108,62 @@ async function uploadFile(file: File) {
       return;
     }
 
-    if (step === 3 && !form.declaration) {
-      setError("You must accept the declaration to continue.");
-      return;
+    if (step === 3) {
+      if (!form.declaration) {
+        setError("You must accept the declaration to continue.");
+        return;
+      }
+      // optional rule: require at least one document
+      if (!form.cvUrl && form.certificateUrls.length === 0 && !form.paymentReceiptUrl) {
+        setError("Please upload at least one document (CV, certificate, or receipt).");
+        return;
+      }
     }
 
-    setStep(step + 1);
+    setStep((s) => Math.min(s + 1, 4));
   }
 
   function back() {
     setError("");
-    setStep(step - 1);
+    setStep((s) => Math.max(s - 1, 0));
   }
 
   async function submit() {
+    setError("");
     setUploading(true);
 
-    await fetch("/api/membership/apply", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(form),
-    });
+    try {
+      // ✅ keep your original keys, but also send aliases to match schema
+      const payload = {
+        ...form,
+        requestedMembershipType: form.membershipType, // schema-friendly alias
+        certificatesUrl: form.certificateUrls,        // schema-friendly alias
+      };
 
-    setUploading(false);
-    setSubmitted(true);
+      const res = await fetch("/api/membership/apply", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      if (!res.ok) {
+        const text = await res.text();
+        throw new Error(text || "Failed to submit application");
+      }
+
+      setSubmitted(true);
+    } catch (e: any) {
+      setError(e?.message || "Something went wrong. Please try again.");
+    } finally {
+      setUploading(false);
+    }
+  }
+
+  function removeCertificate(index: number) {
+    setForm((prev) => ({
+      ...prev,
+      certificateUrls: prev.certificateUrls.filter((_, i) => i !== index),
+    }));
   }
 
   /* ================= SUCCESS ================= */
@@ -115,12 +172,9 @@ async function uploadFile(file: File) {
       <main className="min-h-screen flex items-center justify-center bg-slate-50 px-4">
         <div className="bg-white border rounded-xl p-8 max-w-md w-full text-center">
           <CheckCircle className="w-12 h-12 text-green-600 mx-auto mb-4" />
-          <h2 className="text-xl font-semibold mb-2">
-            Application Submitted
-          </h2>
+          <h2 className="text-xl font-semibold mb-2">Application Submitted</h2>
           <p className="text-gray-600 text-sm">
-            Your membership application has been submitted successfully.
-            Please check back in 24–48 hours for approval status.
+            Your membership application has been submitted successfully. Please check back in 24–48 hours for approval status.
           </p>
         </div>
       </main>
@@ -130,16 +184,13 @@ async function uploadFile(file: File) {
   return (
     <main className="min-h-screen bg-gradient-to-b from-slate-100 via-slate-50 to-white">
       <section className="max-w-4xl mx-auto px-4 py-10">
-
         {/* ================= STEPS ================= */}
         <div className="flex justify-between mb-8">
           {steps.map((label, i) => (
             <div key={i} className="flex-1 text-center">
               <div
                 className={`mx-auto w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold mb-1 ${
-                  i <= step
-                    ? "bg-blue-600 text-white"
-                    : "bg-gray-200 text-gray-500"
+                  i <= step ? "bg-blue-600 text-white" : "bg-gray-200 text-gray-500"
                 }`}
               >
                 {i + 1}
@@ -151,7 +202,6 @@ async function uploadFile(file: File) {
 
         {/* ================= FORM ================= */}
         <div className="bg-white border rounded-xl p-6 space-y-6">
-
           {/* STEP 1 */}
           {step === 0 && (
             <>
@@ -161,42 +211,24 @@ async function uploadFile(file: File) {
                 required
                 className="input w-full"
                 placeholder="Full Name *"
-                onChange={(e) =>
-                  setForm({ ...form, fullName: e.target.value })
-                }
+                value={form.fullName}
+                onChange={(e) => setForm({ ...form, fullName: e.target.value })}
               />
 
               <input
                 required
+                type="email"
                 className="input w-full"
                 placeholder="Email Address *"
-                onChange={(e) =>
-                  setForm({ ...form, email: e.target.value })
-                }
-              />
-
-              <input
-                className="input w-full"
-                placeholder="Nationality"
-                onChange={(e) =>
-                  setForm({ ...form, nationality: e.target.value })
-                }
-              />
-
-              <input
-                className="input w-full"
-                placeholder="State (if Nigeria)"
-                onChange={(e) =>
-                  setForm({ ...form, state: e.target.value })
-                }
+                value={form.email}
+                onChange={(e) => setForm({ ...form, email: e.target.value })}
               />
 
               <input
                 type="date"
                 className="input w-full"
-                onChange={(e) =>
-                  setForm({ ...form, dob: e.target.value })
-                }
+                value={form.dob}
+                onChange={(e) => setForm({ ...form, dob: e.target.value })}
               />
             </>
           )}
@@ -209,16 +241,14 @@ async function uploadFile(file: File) {
               <select
                 required
                 className="input w-full"
-                onChange={(e) =>
-                  setForm({
-                    ...form,
-                    membershipType: e.target.value,
-                  })
-                }
+                value={form.membershipType}
+                onChange={(e) => setForm({ ...form, membershipType: e.target.value })}
               >
                 <option value="">Select membership type *</option>
                 {MEMBERSHIP_TYPES.map((m) => (
-                  <option key={m}>{m}</option>
+                  <option key={m} value={m}>
+                    {m}
+                  </option>
                 ))}
               </select>
             </>
@@ -227,43 +257,20 @@ async function uploadFile(file: File) {
           {/* STEP 3 */}
           {step === 2 && (
             <>
-              <h2 className="text-xl font-semibold">
-                Education & Experience
-              </h2>
+              <h2 className="text-xl font-semibold">Education & Experience</h2>
 
               <input
                 className="input w-full"
                 placeholder="Job Title"
-                onChange={(e) =>
-                  setForm({ ...form, jobTitle: e.target.value })
-                }
+                value={form.jobTitle}
+                onChange={(e) => setForm({ ...form, jobTitle: e.target.value })}
               />
 
               <input
                 className="input w-full"
                 placeholder="Organization"
-                onChange={(e) =>
-                  setForm({ ...form, organization: e.target.value })
-                }
-              />
-
-              <input
-                className="input w-full"
-                placeholder="Nature of Work"
-                onChange={(e) =>
-                  setForm({ ...form, natureOfWork: e.target.value })
-                }
-              />
-
-              <input
-                className="input w-full"
-                placeholder="Years of Experience"
-                onChange={(e) =>
-                  setForm({
-                    ...form,
-                    yearsOfExperience: e.target.value,
-                  })
-                }
+                value={form.organization}
+                onChange={(e) => setForm({ ...form, organization: e.target.value })}
               />
             </>
           )}
@@ -271,100 +278,132 @@ async function uploadFile(file: File) {
           {/* STEP 4 */}
           {step === 3 && (
             <>
-              <h2 className="text-xl font-semibold">
-                Documents & Declaration
-              </h2>
+              <h2 className="text-xl font-semibold">Documents & Declaration</h2>
 
-              <label className="text-sm font-medium">
-                Passport Photograph
-              </label>
-              <input
-                type="file"
-                accept=".jpg,.png"
-                className="input w-full"
-                onChange={async (e) => {
-                  if (!e.target.files?.[0]) return;
-                  setUploading(true);
-                  const url = await uploadFile(e.target.files[0]);
-                  setForm({ ...form, passportPhotoUrl: url });
-                  setUploading(false);
-                }}
-              />
-
-              <label className="text-sm font-medium">
-                Curriculum Vitae (CV)
-              </label>
+              <label className="text-sm font-medium">Curriculum Vitae (CV) (PDF)</label>
               <input
                 type="file"
                 accept=".pdf"
                 className="input w-full"
+                disabled={uploading}
                 onChange={async (e) => {
-                  if (!e.target.files?.[0]) return;
+                  const file = e.target.files?.[0];
+                  if (!file) return;
+
+                  setError("");
                   setUploading(true);
-                  const url = await uploadFile(e.target.files[0]);
-                  setForm({ ...form, cvUrl: url });
-                  setUploading(false);
+                  try {
+                    const url = await uploadFile(file);
+                    setForm((prev) => ({ ...prev, cvUrl: url }));
+                  } catch (err: any) {
+                    setError(err?.message || "CV upload failed");
+                  } finally {
+                    setUploading(false);
+                    e.currentTarget.value = ""; // allow re-selecting same file
+                  }
                 }}
               />
+              {form.cvUrl && (
+                <p className="text-xs text-green-700">CV uploaded successfully.</p>
+              )}
 
-              <label className="text-sm font-medium">
-                Certificates (multiple allowed)
-              </label>
+              <label className="text-sm font-medium">Certificates (multiple allowed)</label>
               <input
                 type="file"
                 multiple
                 accept=".pdf,.jpg,.png"
                 className="input w-full"
+                disabled={uploading}
                 onChange={async (e) => {
                   const files = Array.from(e.target.files || []);
                   if (!files.length) return;
 
+                  setError("");
                   setUploading(true);
-                  const urls = await Promise.all(
-                    files.map(uploadFile)
-                  );
+                  try {
+                    const urls = await Promise.all(files.map(uploadFile));
 
-                  setForm({
-                    ...form,
-                    certificateUrls: urls,
-                  });
-
-                  setUploading(false);
+                    // ✅ append (so user can add more later without losing earlier uploads)
+                    setForm((prev) => ({
+                      ...prev,
+                      certificateUrls: [...prev.certificateUrls, ...urls],
+                    }));
+                  } catch (err: any) {
+                    setError(err?.message || "Certificates upload failed");
+                  } finally {
+                    setUploading(false);
+                    e.currentTarget.value = "";
+                  }
                 }}
               />
 
+              {form.certificateUrls.length > 0 && (
+                <div className="bg-slate-50 border rounded-lg p-3">
+                  <p className="text-sm font-medium mb-2">
+                    Uploaded certificates: {form.certificateUrls.length}
+                  </p>
+                  <ul className="space-y-2">
+                    {form.certificateUrls.map((url, idx) => (
+                      <li key={url + idx} className="flex items-center justify-between gap-3">
+                        <a
+                          href={url}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="text-sm text-blue-600 underline truncate"
+                        >
+                          View document {idx + 1}
+                        </a>
+                        <button
+                          type="button"
+                          className="text-xs text-red-600 flex items-center gap-1"
+                          onClick={() => removeCertificate(idx)}
+                        >
+                          <X className="w-4 h-4" /> Remove
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
               <p className="text-xs text-gray-500">
-                Accepted formats: PDF, JPG, PNG (max 5MB each)
+                Accepted formats: PDF, JPG, PNG
               </p>
 
-              <label className="text-sm font-medium">
-                Payment Receipt
-              </label>
+              <label className="text-sm font-medium">Payment Receipt (optional)</label>
               <input
                 type="file"
                 accept=".pdf,.jpg,.png"
                 className="input w-full"
+                disabled={uploading}
                 onChange={async (e) => {
-                  if (!e.target.files?.[0]) return;
+                  const file = e.target.files?.[0];
+                  if (!file) return;
+
+                  setError("");
                   setUploading(true);
-                  const url = await uploadFile(e.target.files[0]);
-                  setForm({ ...form, paymentReceiptUrl: url });
-                  setUploading(false);
+                  try {
+                    const url = await uploadFile(file);
+                    setForm((prev) => ({ ...prev, paymentReceiptUrl: url }));
+                  } catch (err: any) {
+                    setError(err?.message || "Receipt upload failed");
+                  } finally {
+                    setUploading(false);
+                    e.currentTarget.value = "";
+                  }
                 }}
               />
+              {form.paymentReceiptUrl && (
+                <p className="text-xs text-green-700">Receipt uploaded successfully.</p>
+              )}
 
               <label className="flex gap-2 text-sm">
                 <input
                   type="checkbox"
-                  onChange={(e) =>
-                    setForm({
-                      ...form,
-                      declaration: e.target.checked,
-                    })
-                  }
+                  checked={form.declaration}
+                  onChange={(e) => setForm({ ...form, declaration: e.target.checked })}
                 />
-                I declare that the information provided is true
-                and correct.
+                I declare that the information provided is true and correct.
               </label>
             </>
           )}
@@ -372,13 +411,17 @@ async function uploadFile(file: File) {
           {/* STEP 5 */}
           {step === 4 && (
             <>
-              <h2 className="text-xl font-semibold">
-                Review & Submit
-              </h2>
+              <h2 className="text-xl font-semibold">Review & Submit</h2>
 
               <p><strong>Name:</strong> {form.fullName}</p>
               <p><strong>Email:</strong> {form.email}</p>
               <p><strong>Membership:</strong> {form.membershipType}</p>
+              <p><strong>Job Title:</strong> {form.jobTitle || "—"}</p>
+              <p><strong>Organization:</strong> {form.organization || "—"}</p>
+
+              <p><strong>CV:</strong> {form.cvUrl ? "Uploaded" : "Not uploaded"}</p>
+              <p><strong>Certificates:</strong> {form.certificateUrls.length} uploaded</p>
+              <p><strong>Receipt:</strong> {form.paymentReceiptUrl ? "Uploaded" : "Not uploaded"}</p>
             </>
           )}
 
@@ -390,13 +433,12 @@ async function uploadFile(file: File) {
           )}
 
           <div className="flex justify-between">
-            {step > 0 && (
-              <button
-                onClick={back}
-                className="btn btn-outline"
-              >
+            {step > 0 ? (
+              <button onClick={back} className="btn btn-outline" disabled={uploading}>
                 Back
               </button>
+            ) : (
+              <span />
             )}
 
             <button
@@ -404,11 +446,7 @@ async function uploadFile(file: File) {
               disabled={uploading}
               className="btn btn-primary"
             >
-              {uploading
-                ? "Uploading…"
-                : step < 4
-                ? "Next"
-                : "Submit Application"}
+              {uploading ? "Uploading…" : step < 4 ? "Next" : "Submit Application"}
             </button>
           </div>
         </div>

@@ -3,6 +3,8 @@ import Admin from "@/models/Admin";
 import { comparePassword, signToken } from "@/lib/auth";
 import { cookies } from "next/headers";
 
+export const runtime = "nodejs";
+
 export async function POST(req: Request) {
   await connectDB();
 
@@ -10,22 +12,12 @@ export async function POST(req: Request) {
 
   const admin = await Admin.findOne({ email });
   if (!admin) {
-    return Response.json(
-      { error: "Invalid credentials" },
-      { status: 401 }
-    );
+    return Response.json({ error: "Invalid credentials" }, { status: 401 });
   }
 
-  const valid = await comparePassword(
-    password,
-    admin.passwordHash
-  );
-
+  const valid = await comparePassword(password, admin.passwordHash);
   if (!valid) {
-    return Response.json(
-      { error: "Invalid credentials" },
-      { status: 401 }
-    );
+    return Response.json({ error: "Invalid credentials" }, { status: 401 });
   }
 
   const token = signToken({
@@ -38,6 +30,8 @@ export async function POST(req: Request) {
     httpOnly: true,
     path: "/",
     sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
+    maxAge: 60 * 60 * 24, // 1 day (matches JWT)
   });
 
   return Response.json({ success: true });

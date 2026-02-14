@@ -8,40 +8,81 @@ function generateApplicationId() {
   return `ECRMI-MEM-${year}-${rand}`;
 }
 
+function isValidEmail(email: string) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(email ?? "").trim());
+}
+
+function normalizeCertificatesUrl(data: any): string[] {
+  const raw =
+    data?.certificatesUrl ?? data?.certificateUrls ?? data?.certificateUrl;
+
+  if (!raw) return [];
+  if (Array.isArray(raw)) return raw.filter(Boolean);
+  if (typeof raw === "string") return raw.trim() ? [raw.trim()] : [];
+  return [];
+}
+
 export async function POST(req: Request) {
-  const data = await req.json();
-  await connectDB();
+  try {
+    const data = await req.json();
+    await connectDB();
 
-  const app = await MembershipApplication.create({
-    applicationId: generateApplicationId(),
+    const email = String(data.email ?? "").trim();
+    const fullName = String(data.fullName ?? "").trim();
 
-    // Personal
-    fullName: data.fullName,
-    email: data.email,
-    nationality: data.nationality,
-    state: data.state,
+    if (!fullName) {
+      return NextResponse.json(
+        { success: false, error: "Full name is required" },
+        { status: 400 }
+      );
+    }
 
-    // ✅ FIXED: correct field
-    requestedMembershipType: data.membershipType,
+    if (!email || !isValidEmail(email)) {
+      return NextResponse.json(
+        { success: false, error: "A valid email address is required" },
+        { status: 400 }
+      );
+    }
 
-    // Professional
-    jobTitle: data.jobTitle,
-    organization: data.organization,
-    natureOfWork: data.natureOfWork,
-    yearsOfExperience: Number(data.yearsOfExperience),
+    const certificatesUrl = normalizeCertificatesUrl(data);
 
-    // Documents
-    cvUrl: data.cvUrl,
-  certificatesUrl: data.certificatesUrl
-  ? [data.certificatesUrl]
-  : [],
-    paymentReceiptUrl: data.paymentReceiptUrl,
+    const app = await MembershipApplication.create({
+      applicationId: generateApplicationId(),
 
-    status: "pending",
-  });
+      // Personal (optional extras kept for compatibility)
+      fullName,
+      email,
+      nationality: data.nationality ?? "",
+      state: data.state ?? "",
 
-  return NextResponse.json({
-    success: true,
-    id: app._id,
-  });
+      // Membership
+      requestedMembershipType:
+        data.membershipType ?? data.requestedMembershipType ?? "",
+
+      // Professional (optional)
+      jobTitle: data.jobTitle ?? "",
+      organization: data.organization ?? "",
+      natureOfWork: data.natureOfWork ?? "",
+      yearsOfExperience:
+        data.yearsOfExperience !== undefined && data.yearsOfExperience !== ""
+          ? Number(data.yearsOfExperience)
+          : 0,
+
+      // Documents
+      cvUrl: data.cvUrl ?? "",
+      certificatesUrl,
+      paymentReceiptUrl: data.paymentReceiptUrl ?? "",
+
+      status: "pending",
+      isUpdateRequest: false,
+    });
+
+    return NextResponse.json({ success: true, id: app._id });
+  } catch (err) {
+    console.error("Membership apply error:", err);
+    return NextResponse.json(
+      { success: false, error: "Server error" },
+      { status: 500 }
+    );
+  }
 }

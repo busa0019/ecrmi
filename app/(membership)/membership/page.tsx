@@ -8,7 +8,7 @@ export default function MembershipLandingPage() {
       <section className="bg-white/80 backdrop-blur border-b">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 py-12 sm:py-16 text-center">
           <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-4">
-            ECRMI Professional Membership
+            ECRMI Membership
           </h1>
 
           <p className="text-gray-600 max-w-3xl mx-auto text-base sm:text-lg">

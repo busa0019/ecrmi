@@ -1,5 +1,5 @@
 import { connectDB } from "@/lib/db";
-import MembershipApplication from "@/models/MembershipApplication";
+import Member from "@/models/Member";
 import { NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/requireAdmin";
 
@@ -13,6 +13,6 @@ export async function GET() {
 
   await connectDB();
 
-  const apps = await MembershipApplication.find().sort({ createdAt: -1 }).lean();
-  return NextResponse.json(apps);
+  const members = await Member.find().sort({ createdAt: -1 }).lean();
+  return NextResponse.json(members);
 }
