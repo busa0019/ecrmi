@@ -1,17 +1,18 @@
 import { connectDB } from "@/lib/db";
 import MembershipApplication from "@/models/MembershipApplication";
 import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
 
-export const runtime = "nodejs"; // recommended for mongoose
+export const runtime = "nodejs";
 
 export async function GET(
-  _req: Request,
-  { params }: { params: { certId: string } }
+  _req: NextRequest,
+  { params }: { params: Promise<{ certId: string }> }
 ) {
   try {
     await connectDB();
 
-    const { certId } = params;
+    const { certId } = await params; // ✅ keep this for your Next.js typing
 
     const record = await MembershipApplication.findOne({
       certificateId: certId,
