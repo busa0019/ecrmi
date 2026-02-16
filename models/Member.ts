@@ -32,6 +32,18 @@ const MemberSchema = new mongoose.Schema(
     certificateId: { type: String, unique: true, sparse: true }, // ✅ needed for verify
     certificateUrl: { type: String, default: "" },
     letterUrl: { type: String, default: "" },
+    certificateHistory: {
+  type: [
+    {
+      certificateId: { type: String, required: true },
+      membershipType: { type: String, required: true },
+      issuedAt: { type: Date, required: true },
+      certificateUrl: { type: String, default: "" },
+      letterUrl: { type: String, default: "" },
+    },
+  ],
+  default: [],
+},
 
     membershipStartDate: { type: Date }, // use reviewedAt/issuedAt
 

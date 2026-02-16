@@ -6,12 +6,31 @@ import Member from "@/models/Member";
 import { NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/requireAdmin";
 
-/* ===== helper: generate unique certificate id ===== */
-async function generateUniqueCertificateId() {
+/* ===== helper: membership code from membership type ===== */
+function getMembershipCode(membershipType: string) {
+  const t = String(membershipType || "").toLowerCase();
+
+  // more specific first
+  if (t.includes("professional") && t.includes("fellow")) return "PF";
+  if (t.includes("honorary")) return "H";
+  if (t.includes("affiliate")) return "AF"; // avoids clash with Associate
+  if (t.includes("associate")) return "A";
+  if (t.includes("technical")) return "T";
+  if (t.includes("graduate")) return "G";
+  if (t.includes("fellow")) return "F";
+  if (t.includes("professional")) return "P";
+
+  return "M"; // fallback
+}
+
+/* ===== helper: generate unique certificate id (membership number) ===== */
+async function generateUniqueCertificateId(membershipType: string) {
+  const code = getMembershipCode(membershipType);
+
   // try a few times to avoid collisions
-  for (let i = 0; i < 10; i++) {
+  for (let i = 0; i < 20; i++) {
     const random4 = Math.floor(1000 + Math.random() * 9000);
-    const certId = `ECRMI-MEM-${random4}`;
+    const certId = `ECRMI-${code}-${random4}`;
 
     const existsInApps = await MembershipApplication.exists({
       certificateId: certId,
@@ -25,7 +44,7 @@ async function generateUniqueCertificateId() {
   }
 
   // fallback (very unlikely)
-  return `ECRMI-MEM-${Date.now()}`;
+  return `ECRMI-${code}-${Date.now()}`;
 }
 
 /* ===== GET SINGLE APPLICATION ===== */
@@ -85,33 +104,78 @@ export async function POST(
   app.adminNotes = adminNotes ?? app.adminNotes ?? "";
   app.reviewedAt = new Date();
 
-  // ✅ If approved:
-  // - for NEW application: ensure certificateId exists
-  // - for UPDATE request: do NOT generate a new certificateId
-  if (status === "approved") {
-    if (!app.isUpdateRequest) {
-      if (!app.certificateId || String(app.certificateId).trim() === "") {
-        app.certificateId = await generateUniqueCertificateId();
-      }
+  // Ensure new applications have an ID at least once approved
+  if (status === "approved" && !app.isUpdateRequest) {
+    if (!app.certificateId || String(app.certificateId).trim() === "") {
+      app.certificateId = await generateUniqueCertificateId(finalApprovedType);
     }
   }
 
   await app.save();
 
-  // ✅ If approved → move/update into Members collection
+  // ✅ If approved → move/update into Members collection (and handle history + id changes)
   if (status === "approved") {
-    // Update requests should update an existing member (same email)
-    const existingMember = await Member.findOne({ email: app.email }).lean();
+    const memberDoc = await Member.findOne({ email: app.email }); // <-- use Member record (not lean)
 
-    // If this is an update request but member doesn't exist, we can either:
-    // - create a new member (not ideal), or
-    // - return error. We'll be safe and allow creation using existing app.certificateId if present.
-    const certificateIdToUse =
-      existingMember?.certificateId ||
-      app.certificateId ||
-      (app.isUpdateRequest ? "" : await generateUniqueCertificateId());
+    const desiredCode = getMembershipCode(finalApprovedType);
 
-    const memberUpdate: any = {
+    const memberCurrentCertId = memberDoc
+      ? String(memberDoc.certificateId || memberDoc.memberId || "").trim()
+      : "";
+
+    const memberCurrentCode = memberCurrentCertId.split("-")?.[1]?.toUpperCase() || "";
+
+    const shouldRegenerateIdBecauseTypeChanged =
+      !!memberDoc && !!memberCurrentCertId && memberCurrentCode && memberCurrentCode !== desiredCode;
+
+    // If type changed => store old in history + create new current id
+    let certificateIdToUse = "";
+
+    if (shouldRegenerateIdBecauseTypeChanged) {
+      const oldCertId = memberCurrentCertId;
+
+      // avoid duplicate history entries
+      const history = Array.isArray((memberDoc as any).certificateHistory)
+        ? (memberDoc as any).certificateHistory
+        : [];
+
+      const alreadyInHistory = history.some(
+        (h: any) =>
+          String(h?.certificateId || "").trim().toLowerCase() ===
+          oldCertId.toLowerCase()
+      );
+
+      if (!alreadyInHistory) {
+        (memberDoc as any).certificateHistory = history.concat([
+          {
+            certificateId: oldCertId,
+            membershipType: memberDoc!.membershipType,
+            issuedAt:
+              memberDoc!.membershipStartDate ??
+              memberDoc!.updatedAt ??
+              memberDoc!.createdAt ??
+              new Date(),
+            certificateUrl: memberDoc!.certificateUrl ?? "",
+            letterUrl: memberDoc!.letterUrl ?? "",
+          },
+        ]);
+      }
+
+      const newCertId = await generateUniqueCertificateId(finalApprovedType);
+      certificateIdToUse = newCertId;
+
+      // Update the application too so it matches the new current membership number
+      app.certificateId = newCertId;
+      await app.save();
+    } else {
+      // Otherwise keep existing member id, or fall back to application id (new approvals)
+      certificateIdToUse =
+        memberCurrentCertId ||
+        String(app.certificateId || "").trim() ||
+        (app.isUpdateRequest ? "" : await generateUniqueCertificateId(finalApprovedType));
+    }
+
+    const memberPayload: any = {
       fullName: app.fullName ?? "",
       email: app.email ?? "",
       membershipType: finalApprovedType,
@@ -125,32 +189,40 @@ export async function POST(
       certificatesUrl: app.certificatesUrl ?? [],
       paymentReceiptUrl: app.paymentReceiptUrl ?? "",
 
-      // Do not wipe existing generated files if update request doesn't include them
-      certificateUrl: app.certificateUrl ?? existingMember?.certificateUrl ?? "",
-      letterUrl: app.letterUrl ?? existingMember?.letterUrl ?? "",
+      certificateUrl: app.certificateUrl ?? memberDoc?.certificateUrl ?? "",
+      letterUrl: app.letterUrl ?? memberDoc?.letterUrl ?? "",
 
       membershipStartDate:
-        existingMember?.membershipStartDate ??
+        memberDoc?.membershipStartDate ??
         app.reviewedAt ??
         app.updatedAt ??
         app.createdAt,
 
       status: "active",
-      applicationId: app.applicationId ?? existingMember?.applicationId ?? "",
+      applicationId: app.applicationId ?? memberDoc?.applicationId ?? "",
       sourceApplicationObjectId: app._id,
     };
 
-    // Only set certificateId/memberId when we actually have one
     if (certificateIdToUse) {
-      memberUpdate.certificateId = certificateIdToUse;
-      memberUpdate.memberId = certificateIdToUse;
+      memberPayload.certificateId = certificateIdToUse;
+      memberPayload.memberId = certificateIdToUse;
     }
 
-    await Member.findOneAndUpdate(
-      { email: app.email },
-      { $set: memberUpdate },
-      { upsert: true, new: true }
-    );
+    if (memberDoc) {
+      // keep existing history (already updated above if needed)
+      const existingHistory = (memberDoc as any).certificateHistory;
+      memberDoc.set(memberPayload);
+      if (existingHistory) {
+        (memberDoc as any).certificateHistory = existingHistory;
+      }
+      await memberDoc.save();
+    } else {
+      await Member.findOneAndUpdate(
+        { email: app.email },
+        { $set: memberPayload },
+        { upsert: true, new: true }
+      );
+    }
   }
 
   return NextResponse.json({ success: true });

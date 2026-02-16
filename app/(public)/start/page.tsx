@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ShieldAlert, ArrowLeft, Lock } from "lucide-react";
+import { ShieldAlert, Lock, KeyRound } from "lucide-react";
 
 export default function StartPage() {
   const router = useRouter();
@@ -10,8 +10,10 @@ export default function StartPage() {
   const [mounted, setMounted] = useState(false);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
+  const [accessCode, setAccessCode] = useState("");
   const [loading, setLoading] = useState(false);
   const [resumeDetected, setResumeDetected] = useState(false);
+  const [error, setError] = useState("");
 
   /* ================= MOUNT + RESUME SESSION ================= */
   useEffect(() => {
@@ -29,15 +31,24 @@ export default function StartPage() {
 
   /* ================= CONTINUE ================= */
   async function handleContinue() {
-    if (!name || !email || loading) return;
+    setError("");
+    if (!name || !email || !accessCode || loading) return;
 
     setLoading(true);
 
-    await fetch("/api/participant", {
+    const res = await fetch("/api/participant", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, email }),
+      body: JSON.stringify({ name, email, accessCode }),
     });
+
+    const data = await res.json().catch(() => ({}));
+
+    if (!res.ok) {
+      setLoading(false);
+      setError(data?.error || "Unable to initialize session. Please try again.");
+      return;
+    }
 
     sessionStorage.setItem("participantName", name);
     sessionStorage.setItem("participantEmail", email);
@@ -53,7 +64,6 @@ export default function StartPage() {
   return (
     <main className="min-h-screen flex items-center justify-center px-6 bg-[#0b1220]">
       <div className="w-full max-w-xl text-white">
-
         {/* HEADING */}
         <h1 className="text-5xl md:text-6xl font-extrabold text-center mb-10 tracking-tight">
           <span className="block text-white">IDENTITY</span>
@@ -83,11 +93,17 @@ export default function StartPage() {
 
         {/* FORM */}
         <div className="rounded-2xl bg-[#020617] p-8 space-y-7 shadow-2xl border border-slate-800">
-
           {/* LOCK ICON */}
           <div className="flex justify-center">
             <Lock className="w-8 h-8 text-blue-500 animate-pulse" />
           </div>
+
+          {/* ERROR */}
+          {error && (
+            <div className="rounded-xl border border-red-500/40 bg-red-900/20 p-4 text-red-200 text-sm">
+              {error}
+            </div>
+          )}
 
           {/* NAME */}
           <div>
@@ -124,25 +140,38 @@ export default function StartPage() {
             </p>
           </div>
 
+          {/* ACCESS CODE */}
+          <div>
+            <label className="block text-sm font-semibold text-slate-200 mb-2">
+              Training Access Code
+            </label>
+
+            <div className="relative">
+              <KeyRound className="w-5 h-5 text-slate-400 absolute left-4 top-1/2 -translate-y-1/2" />
+              <input
+                className="w-full pl-12 rounded-xl bg-[#020617]/80 border border-slate-600 px-4 py-4 text-white
+                           focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600"
+                placeholder="e.g. ECRMI-TRN-8H2K9D"
+                value={accessCode}
+                onChange={(e) => setAccessCode(e.target.value)}
+              />
+            </div>
+
+            <p className="mt-2 text-xs text-slate-400">
+              You will receive this code after payment confirmation.
+            </p>
+          </div>
+
           {/* CTA */}
           <button
             onClick={handleContinue}
-            disabled={!name || !email || loading}
+            disabled={!name || !email || !accessCode || loading}
             className="w-full rounded-xl bg-blue-700 hover:bg-blue-800 py-4 font-bold text-white
                        disabled:opacity-50 disabled:cursor-not-allowed transition"
           >
             {loading ? "INITIALIZING SESSION…" : "INITIALIZE SESSION"}
           </button>
         </div>
-
-        {/* BACK */}
-        <button
-          onClick={() => router.push("/")}
-          className="mt-8 flex items-center gap-2 text-sm text-slate-400 hover:text-white transition mx-auto"
-        >
-          
-          
-        </button>
       </div>
     </main>
   );

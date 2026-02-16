@@ -50,7 +50,7 @@ const MembershipApplicationSchema = new mongoose.Schema(
     adminNotes: String,
     reviewedAt: Date,
 
-    // ✅ THIS WAS MISSING
+    
     isUpdateRequest: {
       type: Boolean,
       default: false,

@@ -7,11 +7,16 @@ const CourseSchema = new mongoose.Schema(
     facilitator: String,
     durationMinutes: Number,
     passMark: Number,
-    pdfUrl: String,
+
+    // existing (keep)
+    pdfUrl: { type: String, default: "" },
+
+    // NEW: multiple materials (links + uploads)
+    materialUrls: { type: [String], default: [] },
+
     active: Boolean,
   },
   { timestamps: true }
 );
 
-export default mongoose.models.Course ||
-  mongoose.model("Course", CourseSchema);
+export default mongoose.models.Course || mongoose.model("Course", CourseSchema);

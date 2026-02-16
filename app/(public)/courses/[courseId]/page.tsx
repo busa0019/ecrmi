@@ -6,6 +6,17 @@ import { FileText, AlertTriangle, ArrowLeft } from "lucide-react";
 import CourseStatus from "./status";
 import StartAssessmentCTA from "./StartAssessmentCTA";
 
+function filenameFromUrl(url: string) {
+  try {
+    const u = new URL(url);
+    const last = u.pathname.split("/").filter(Boolean).pop() || "";
+    return decodeURIComponent(last) || "Download material";
+  } catch {
+    const last = String(url).split("/").filter(Boolean).pop() || "";
+    return last || "Download material";
+  }
+}
+
 export default async function CourseIntroPage({
   params,
 }: {
@@ -14,7 +25,7 @@ export default async function CourseIntroPage({
   const { courseId } = await params;
 
   await connectDB();
-  const course = await Course.findById(courseId).lean();
+  const course: any = await Course.findById(courseId).lean();
 
   if (!course) {
     return (
@@ -23,6 +34,14 @@ export default async function CourseIntroPage({
       </main>
     );
   }
+
+  // ✅ Combine old single pdfUrl + new materialUrls (dedupe)
+  const materialUrls: string[] = Array.from(
+    new Set([
+      ...(course.pdfUrl ? [String(course.pdfUrl)] : []),
+      ...(Array.isArray(course.materialUrls) ? course.materialUrls.map(String) : []),
+    ].filter(Boolean))
+  );
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-slate-100 via-slate-50 to-white">
@@ -87,18 +106,27 @@ export default async function CourseIntroPage({
             </div>
           </div>
 
-          {/* ===== SECONDARY ACTION (PDF) ===== */}
-          {course.pdfUrl && (
+          {/* ===== COURSE MATERIALS (supports multiple) ===== */}
+          {materialUrls.length > 0 && (
             <div className="mb-10">
-              <a
-                href={course.pdfUrl}
-                target="_blank"
-                rel="noreferrer"
-                className="inline-flex items-center gap-2 text-blue-600 hover:underline text-sm"
-              >
-                <FileText className="w-5 h-5" />
-                Download Course Material (PDF)
-              </a>
+              <h2 className="text-sm font-semibold text-slate-800 mb-3">
+                Course Materials
+              </h2>
+
+              <div className="space-y-2">
+                {materialUrls.map((url, idx) => (
+                  <a
+                    key={url + idx}
+                    href={url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-2 text-blue-600 hover:underline text-sm break-all"
+                  >
+                    <FileText className="w-5 h-5" />
+                    {filenameFromUrl(url)}
+                  </a>
+                ))}
+              </div>
             </div>
           )}
 

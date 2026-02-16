@@ -9,6 +9,7 @@ import {
   Award,
   Settings,
   Users,
+  KeyRound,
 } from "lucide-react";
 import clsx from "clsx";
 
@@ -20,9 +21,13 @@ type NavItem = {
 
 const navItems: NavItem[] = [
   { label: "Dashboard", path: "/admin/dashboard", icon: LayoutDashboard },
+
   { label: "Courses", path: "/admin/courses", icon: BookOpen },
   { label: "Attempts", path: "/admin/attempts", icon: FileCheck },
   { label: "Certificates", path: "/admin/certificates", icon: Award },
+
+  { label: "Training Codes", path: "/admin/training-codes", icon: KeyRound },
+
   { label: "Analytics", path: "/admin/analytics", icon: BarChart2 },
   { label: "Memberships", path: "/admin/memberships", icon: Users },
   { label: "Settings", path: "/admin/settings", icon: Settings },
@@ -39,9 +44,7 @@ export default function AdminSidebar() {
         <h1 className="text-xl font-bold text-[#0F172A]">
           ECRMI <span className="text-teal-600">Admin</span>
         </h1>
-        <p className="text-xs text-slate-500">
-          Training Platform
-        </p>
+        <p className="text-xs text-slate-500">Training Platform</p>
       </div>
 
       {/* Navigation */}
@@ -52,7 +55,7 @@ export default function AdminSidebar() {
           return (
             <button
               key={path}
-            onClick={() => router.push(path as any)}
+              onClick={() => router.push(path as any)}
               className={clsx(
                 "relative w-full flex items-center gap-3 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200",
                 active

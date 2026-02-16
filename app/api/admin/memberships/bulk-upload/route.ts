@@ -1,5 +1,6 @@
 import { connectDB } from "@/lib/db";
 import MembershipApplication from "@/models/MembershipApplication";
+import Member from "@/models/Member";
 import { NextResponse } from "next/server";
 import { parse } from "csv-parse/sync";
 import { requireAdmin } from "@/lib/requireAdmin";
@@ -12,14 +13,42 @@ function generateApplicationId() {
   return `ECRMI-MEM-${year}-${rand}`;
 }
 
-function generateCertificateId() {
-  const rand = Math.floor(1000 + Math.random() * 9000);
-  return `ECRMI-MEM-${rand}`;
+function getMembershipCode(membershipType: string) {
+  const t = String(membershipType || "").toLowerCase();
+
+  if (t.includes("professional") && t.includes("fellow")) return "PF";
+  if (t.includes("honorary")) return "H";
+  if (t.includes("affiliate")) return "AF";
+  if (t.includes("associate")) return "A";
+  if (t.includes("technical")) return "T";
+  if (t.includes("graduate")) return "G";
+  if (t.includes("fellow")) return "F";
+  if (t.includes("professional")) return "P";
+
+  return "M";
+}
+
+async function generateUniqueCertificateId(membershipType: string) {
+  const code = getMembershipCode(membershipType);
+
+  while (true) {
+    const rand = Math.floor(1000 + Math.random() * 9000);
+    const certId = `ECRMI-${code}-${rand}`;
+
+    const existsInApps = await MembershipApplication.exists({
+      certificateId: certId,
+    });
+
+    const existsInMembers = await Member.exists({
+      certificateId: certId,
+    });
+
+    if (!existsInApps && !existsInMembers) return certId;
+  }
 }
 
 export async function POST(req: Request) {
   try {
-    // ✅ REAL protection
     const admin = await requireAdmin();
     if (!admin) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -67,6 +96,8 @@ export async function POST(req: Request) {
         continue;
       }
 
+      const certId = await generateUniqueCertificateId(membershipType);
+
       await MembershipApplication.create({
         applicationId: generateApplicationId(),
 
@@ -79,7 +110,7 @@ export async function POST(req: Request) {
         status: "approved",
         reviewedAt: new Date(),
 
-        certificateId: generateCertificateId(),
+        certificateId: certId,
 
         adminNotes: importTag,
         isUpdateRequest: false,

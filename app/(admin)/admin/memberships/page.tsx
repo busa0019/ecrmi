@@ -111,7 +111,9 @@ export default function AdminMembershipsPage() {
                 <tr key={app._id} className="border-b">
                   <td className="p-4">{app.fullName || "—"}</td>
                   <td className="p-4">{app.email || "—"}</td>
-                  <td className="p-4">{app.requestedMembershipType || "—"}</td>
+                  <td className="p-4">
+  {app.approvedMembershipType || app.requestedMembershipType || "—"}
+</td>
                   <td className="p-4 capitalize">{app.status || "—"}</td>
                   <td className="p-4">
                     <Link
@@ -155,7 +157,9 @@ export default function AdminMembershipsPage() {
                 <tr key={app._id} className="border-b bg-yellow-50">
                   <td className="p-4">{app.fullName || "—"}</td>
                   <td className="p-4">{app.email || "—"}</td>
-                  <td className="p-4">{app.requestedMembershipType || "—"}</td>
+                  <td className="p-4">
+  {app.approvedMembershipType || app.requestedMembershipType || "—"}
+</td>
                   <td className="p-4 capitalize">{app.status || "—"}</td>
                   <td className="p-4">
                     <Link

@@ -36,7 +36,7 @@ export default function MembershipVerifyHome() {
         <div className="flex gap-4 justify-center">
           <input
             type="text"
-            placeholder="ECRMI-MEM-XXXX"
+            placeholder="ECRMI-A-1234"
             value={code}
             onChange={(e) => setCode(e.target.value)}
             className="border rounded-lg px-4 py-3 w-full max-w-md"

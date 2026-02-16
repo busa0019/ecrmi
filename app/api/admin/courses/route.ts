@@ -24,12 +24,14 @@ export async function POST(req: Request) {
     await requireAdmin();
     await connectDB();
 
-    const {
-      title,
-      description,
-      durationMinutes,
-      passMark,
-    } = await req.json();
+  const {
+  title,
+  description,
+  durationMinutes,
+  passMark,
+  pdfUrl,
+  materialUrls,
+} = await req.json();
 
     if (!title || !description) {
       return NextResponse.json(
@@ -38,13 +40,15 @@ export async function POST(req: Request) {
       );
     }
 
-    const course = await Course.create({
-      title,
-      description,
-      durationMinutes,
-      passMark,
-      active: true, // ✅ IMPORTANT (public page filters by active:true)
-    });
+const course = await Course.create({
+  title,
+  description,
+  durationMinutes,
+  passMark,
+  pdfUrl: pdfUrl || "",
+  materialUrls: Array.isArray(materialUrls) ? materialUrls : [],
+  active: true,
+});
 
     return NextResponse.json({
       success: true,

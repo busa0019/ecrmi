@@ -12,7 +12,6 @@ const steps = [
 ];
 
 const MEMBERSHIP_TYPES = [
-  "Student Member",
   "Affiliate Member",
   "Graduate Member",
   "Associate Member",
@@ -114,8 +113,14 @@ export default function MembershipApplyPage() {
         return;
       }
       // optional rule: require at least one document
-      if (!form.cvUrl && form.certificateUrls.length === 0 && !form.paymentReceiptUrl) {
-        setError("Please upload at least one document (CV, certificate, or receipt).");
+      if (
+        !form.cvUrl &&
+        form.certificateUrls.length === 0 &&
+        !form.paymentReceiptUrl
+      ) {
+        setError(
+          "Please upload at least one document (CV, certificate, or receipt)."
+        );
         return;
       }
     }
@@ -137,7 +142,7 @@ export default function MembershipApplyPage() {
       const payload = {
         ...form,
         requestedMembershipType: form.membershipType, // schema-friendly alias
-        certificatesUrl: form.certificateUrls,        // schema-friendly alias
+        certificatesUrl: form.certificateUrls, // schema-friendly alias
       };
 
       const res = await fetch("/api/membership/apply", {
@@ -174,7 +179,8 @@ export default function MembershipApplyPage() {
           <CheckCircle className="w-12 h-12 text-green-600 mx-auto mb-4" />
           <h2 className="text-xl font-semibold mb-2">Application Submitted</h2>
           <p className="text-gray-600 text-sm">
-            Your membership application has been submitted successfully. Please check back in 24–48 hours for approval status.
+            Your membership application has been submitted successfully. Please
+            check back in 24–48 hours for approval status.
           </p>
         </div>
       </main>
@@ -190,7 +196,9 @@ export default function MembershipApplyPage() {
             <div key={i} className="flex-1 text-center">
               <div
                 className={`mx-auto w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold mb-1 ${
-                  i <= step ? "bg-blue-600 text-white" : "bg-gray-200 text-gray-500"
+                  i <= step
+                    ? "bg-blue-600 text-white"
+                    : "bg-gray-200 text-gray-500"
                 }`}
               >
                 {i + 1}
@@ -212,7 +220,9 @@ export default function MembershipApplyPage() {
                 className="input w-full"
                 placeholder="Full Name *"
                 value={form.fullName}
-                onChange={(e) => setForm({ ...form, fullName: e.target.value })}
+                onChange={(e) =>
+                  setForm({ ...form, fullName: e.target.value })
+                }
               />
 
               <input
@@ -242,7 +252,9 @@ export default function MembershipApplyPage() {
                 required
                 className="input w-full"
                 value={form.membershipType}
-                onChange={(e) => setForm({ ...form, membershipType: e.target.value })}
+                onChange={(e) =>
+                  setForm({ ...form, membershipType: e.target.value })
+                }
               >
                 <option value="">Select membership type *</option>
                 {MEMBERSHIP_TYPES.map((m) => (
@@ -263,14 +275,18 @@ export default function MembershipApplyPage() {
                 className="input w-full"
                 placeholder="Job Title"
                 value={form.jobTitle}
-                onChange={(e) => setForm({ ...form, jobTitle: e.target.value })}
+                onChange={(e) =>
+                  setForm({ ...form, jobTitle: e.target.value })
+                }
               />
 
               <input
                 className="input w-full"
                 placeholder="Organization"
                 value={form.organization}
-                onChange={(e) => setForm({ ...form, organization: e.target.value })}
+                onChange={(e) =>
+                  setForm({ ...form, organization: e.target.value })
+                }
               />
             </>
           )}
@@ -280,14 +296,17 @@ export default function MembershipApplyPage() {
             <>
               <h2 className="text-xl font-semibold">Documents & Declaration</h2>
 
-              <label className="text-sm font-medium">Curriculum Vitae (CV) (PDF)</label>
+              <label className="text-sm font-medium">
+                Curriculum Vitae (CV) (PDF)
+              </label>
               <input
                 type="file"
                 accept=".pdf"
                 className="input w-full"
                 disabled={uploading}
                 onChange={async (e) => {
-                  const file = e.target.files?.[0];
+                  const input = e.currentTarget; // ✅ capture before await
+                  const file = input.files?.[0];
                   if (!file) return;
 
                   setError("");
@@ -299,15 +318,19 @@ export default function MembershipApplyPage() {
                     setError(err?.message || "CV upload failed");
                   } finally {
                     setUploading(false);
-                    e.currentTarget.value = ""; // allow re-selecting same file
+                    input.value = ""; // ✅ safe reset
                   }
                 }}
               />
               {form.cvUrl && (
-                <p className="text-xs text-green-700">CV uploaded successfully.</p>
+                <p className="text-xs text-green-700">
+                  CV uploaded successfully.
+                </p>
               )}
 
-              <label className="text-sm font-medium">Certificates (multiple allowed)</label>
+              <label className="text-sm font-medium">
+                Certificates (multiple allowed)
+              </label>
               <input
                 type="file"
                 multiple
@@ -315,7 +338,8 @@ export default function MembershipApplyPage() {
                 className="input w-full"
                 disabled={uploading}
                 onChange={async (e) => {
-                  const files = Array.from(e.target.files || []);
+                  const input = e.currentTarget; // ✅ capture before await
+                  const files = Array.from(input.files || []);
                   if (!files.length) return;
 
                   setError("");
@@ -332,7 +356,7 @@ export default function MembershipApplyPage() {
                     setError(err?.message || "Certificates upload failed");
                   } finally {
                     setUploading(false);
-                    e.currentTarget.value = "";
+                    input.value = ""; // ✅ safe reset
                   }
                 }}
               />
@@ -344,7 +368,10 @@ export default function MembershipApplyPage() {
                   </p>
                   <ul className="space-y-2">
                     {form.certificateUrls.map((url, idx) => (
-                      <li key={url + idx} className="flex items-center justify-between gap-3">
+                      <li
+                        key={url + idx}
+                        className="flex items-center justify-between gap-3"
+                      >
                         <a
                           href={url}
                           target="_blank"
@@ -370,14 +397,17 @@ export default function MembershipApplyPage() {
                 Accepted formats: PDF, JPG, PNG
               </p>
 
-              <label className="text-sm font-medium">Payment Receipt (optional)</label>
+              <label className="text-sm font-medium">
+                Payment Receipt (optional)
+              </label>
               <input
                 type="file"
                 accept=".pdf,.jpg,.png"
                 className="input w-full"
                 disabled={uploading}
                 onChange={async (e) => {
-                  const file = e.target.files?.[0];
+                  const input = e.currentTarget; // ✅ capture before await
+                  const file = input.files?.[0];
                   if (!file) return;
 
                   setError("");
@@ -389,19 +419,23 @@ export default function MembershipApplyPage() {
                     setError(err?.message || "Receipt upload failed");
                   } finally {
                     setUploading(false);
-                    e.currentTarget.value = "";
+                    input.value = ""; // ✅ safe reset
                   }
                 }}
               />
               {form.paymentReceiptUrl && (
-                <p className="text-xs text-green-700">Receipt uploaded successfully.</p>
+                <p className="text-xs text-green-700">
+                  Receipt uploaded successfully.
+                </p>
               )}
 
               <label className="flex gap-2 text-sm">
                 <input
                   type="checkbox"
                   checked={form.declaration}
-                  onChange={(e) => setForm({ ...form, declaration: e.target.checked })}
+                  onChange={(e) =>
+                    setForm({ ...form, declaration: e.target.checked })
+                  }
                 />
                 I declare that the information provided is true and correct.
               </label>
@@ -413,15 +447,196 @@ export default function MembershipApplyPage() {
             <>
               <h2 className="text-xl font-semibold">Review & Submit</h2>
 
-              <p><strong>Name:</strong> {form.fullName}</p>
-              <p><strong>Email:</strong> {form.email}</p>
-              <p><strong>Membership:</strong> {form.membershipType}</p>
-              <p><strong>Job Title:</strong> {form.jobTitle || "—"}</p>
-              <p><strong>Organization:</strong> {form.organization || "—"}</p>
+              <div className="grid gap-4 sm:grid-cols-2">
+                {/* Personal */}
+                <div className="rounded-xl border bg-slate-50 p-4">
+                  <h3 className="text-sm font-semibold text-slate-800 mb-3">
+                    Personal
+                  </h3>
 
-              <p><strong>CV:</strong> {form.cvUrl ? "Uploaded" : "Not uploaded"}</p>
-              <p><strong>Certificates:</strong> {form.certificateUrls.length} uploaded</p>
-              <p><strong>Receipt:</strong> {form.paymentReceiptUrl ? "Uploaded" : "Not uploaded"}</p>
+                  <dl className="space-y-2 text-sm">
+                    <div className="flex items-start justify-between gap-3">
+                      <dt className="text-slate-600">Full Name</dt>
+                      <dd className="font-medium text-slate-900 text-right">
+                        {form.fullName || "—"}
+                      </dd>
+                    </div>
+
+                    <div className="flex items-start justify-between gap-3">
+                      <dt className="text-slate-600">Email</dt>
+                      <dd className="font-medium text-slate-900 text-right break-all">
+                        {form.email || "—"}
+                      </dd>
+                    </div>
+
+                    <div className="flex items-start justify-between gap-3">
+                      <dt className="text-slate-600">Date of Birth</dt>
+                      <dd className="font-medium text-slate-900 text-right">
+                        {form.dob || "—"}
+                      </dd>
+                    </div>
+                  </dl>
+                </div>
+
+                {/* Membership */}
+                <div className="rounded-xl border bg-slate-50 p-4">
+                  <h3 className="text-sm font-semibold text-slate-800 mb-3">
+                    Membership
+                  </h3>
+
+                  <dl className="space-y-2 text-sm">
+                    <div className="flex items-start justify-between gap-3">
+                      <dt className="text-slate-600">Type</dt>
+                      <dd className="text-right">
+                        <span className="inline-flex items-center rounded-full bg-blue-600/10 px-3 py-1 text-xs font-semibold text-blue-700">
+                          {form.membershipType || "—"}
+                        </span>
+                      </dd>
+                    </div>
+
+                    <div className="flex items-start justify-between gap-3">
+                      <dt className="text-slate-600">Job Title</dt>
+                      <dd className="font-medium text-slate-900 text-right">
+                        {form.jobTitle || "—"}
+                      </dd>
+                    </div>
+
+                    <div className="flex items-start justify-between gap-3">
+                      <dt className="text-slate-600">Organization</dt>
+                      <dd className="font-medium text-slate-900 text-right">
+                        {form.organization || "—"}
+                      </dd>
+                    </div>
+                  </dl>
+                </div>
+
+                {/* Documents */}
+                <div className="rounded-xl border bg-slate-50 p-4 sm:col-span-2">
+                  <h3 className="text-sm font-semibold text-slate-800 mb-3">
+                    Documents
+                  </h3>
+
+                  <div className="grid gap-3 sm:grid-cols-3">
+                    {/* CV */}
+                    <div className="rounded-lg border bg-white p-3">
+                      <p className="text-xs text-slate-600 mb-2">CV</p>
+                      {form.cvUrl ? (
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="inline-flex items-center rounded-full bg-green-600/10 px-2.5 py-1 text-xs font-semibold text-green-700">
+                            Uploaded
+                          </span>
+                          <a
+                            href={form.cvUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="text-xs font-semibold text-blue-600 underline"
+                          >
+                            View
+                          </a>
+                        </div>
+                      ) : (
+                        <span className="inline-flex items-center rounded-full bg-rose-600/10 px-2.5 py-1 text-xs font-semibold text-rose-700">
+                          Not uploaded
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Certificates (dropdown) */}
+                    <div className="rounded-lg border bg-white p-3">
+                      <p className="text-xs text-slate-600 mb-2">Certificates</p>
+
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="inline-flex items-center rounded-full bg-slate-900/5 px-2.5 py-1 text-xs font-semibold text-slate-700">
+                          {form.certificateUrls.length} uploaded
+                        </span>
+
+                        {form.certificateUrls.length > 0 ? (
+                          <details className="relative">
+                            <summary className="list-none cursor-pointer select-none text-xs font-semibold text-blue-600 underline">
+                              View
+                            </summary>
+
+                            <div className="absolute right-0 z-20 mt-2 w-56 rounded-lg border bg-white shadow-lg">
+                              <div className="max-h-56 overflow-auto p-2">
+                                {form.certificateUrls.map((url, idx) => (
+                                  <a
+                                    key={url + idx}
+                                    href={url}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="block rounded-md px-2 py-2 text-xs text-slate-700 hover:bg-slate-50"
+                                  >
+                                    Certificate {idx + 1}
+                                  </a>
+                                ))}
+                              </div>
+                            </div>
+                          </details>
+                        ) : (
+                          <span className="text-xs text-slate-400">—</span>
+                        )}
+                      </div>
+
+                      {form.certificateUrls.length > 0 && (
+                        <p className="mt-2 text-[11px] text-slate-500">
+                          Tip: Clicking any item opens it in a new tab.
+                        </p>
+                      )}
+                    </div>
+
+                    {/* Receipt */}
+                    <div className="rounded-lg border bg-white p-3">
+                      <p className="text-xs text-slate-600 mb-2">
+                        Payment Receipt
+                      </p>
+                      {form.paymentReceiptUrl ? (
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="inline-flex items-center rounded-full bg-green-600/10 px-2.5 py-1 text-xs font-semibold text-green-700">
+                            Uploaded
+                          </span>
+                          <a
+                            href={form.paymentReceiptUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="text-xs font-semibold text-blue-600 underline"
+                          >
+                            View
+                          </a>
+                        </div>
+                      ) : (
+                        <span className="inline-flex items-center rounded-full bg-rose-600/10 px-2.5 py-1 text-xs font-semibold text-rose-700">
+                          Not uploaded
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Declaration */}
+                <div className="rounded-xl border bg-white p-4 sm:col-span-2">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <h3 className="text-sm font-semibold text-slate-800">
+                        Declaration
+                      </h3>
+                      <p className="text-xs text-slate-500">
+                        Confirm you have accepted the declaration in the
+                        previous step.
+                      </p>
+                    </div>
+
+                    <span
+                      className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${
+                        form.declaration
+                          ? "bg-green-600/10 text-green-700"
+                          : "bg-rose-600/10 text-rose-700"
+                      }`}
+                    >
+                      {form.declaration ? "Accepted" : "Not accepted"}
+                    </span>
+                  </div>
+                </div>
+              </div>
             </>
           )}
 
@@ -434,7 +649,11 @@ export default function MembershipApplyPage() {
 
           <div className="flex justify-between">
             {step > 0 ? (
-              <button onClick={back} className="btn btn-outline" disabled={uploading}>
+              <button
+                onClick={back}
+                className="btn btn-outline"
+                disabled={uploading}
+              >
                 Back
               </button>
             ) : (
@@ -446,7 +665,11 @@ export default function MembershipApplyPage() {
               disabled={uploading}
               className="btn btn-primary"
             >
-              {uploading ? "Uploading…" : step < 4 ? "Next" : "Submit Application"}
+              {uploading
+                ? "Uploading…"
+                : step < 4
+                ? "Next"
+                : "Submit Application"}
             </button>
           </div>
         </div>

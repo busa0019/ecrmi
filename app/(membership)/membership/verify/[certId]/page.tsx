@@ -6,7 +6,6 @@ export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 function normalizeCertId(input: string) {
-  // decode + trim + remove invisible characters that often come from QR/Copy-Paste
   return decodeURIComponent(String(input ?? ""))
     .trim()
     .replace(/[\u200B-\u200D\uFEFF]/g, "");
@@ -44,7 +43,11 @@ export default async function VerifyMembershipPage({
                 strokeWidth="3"
                 viewBox="0 0 24 24"
               >
-                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M5 13l4 4L19 7"
+                />
               </svg>
             </div>
 
@@ -53,13 +56,41 @@ export default async function VerifyMembershipPage({
             </h1>
 
             <div className="bg-gray-100 rounded-xl p-6 text-left space-y-2">
-              <p><strong>Member Name:</strong> {data.name}</p>
-              <p><strong>Membership Type:</strong> {data.membershipType}</p>
+              <p>
+                <strong>Member Name:</strong> {data.name}
+              </p>
+
+              <p>
+                <strong>Certificate ID (Verified):</strong>{" "}
+                {"verifiedCertificateId" in data ? data.verifiedCertificateId : certId}
+              </p>
+
+              <p>
+                <strong>Issued As:</strong>{" "}
+                {"issuedAsMembershipType" in data ? data.issuedAsMembershipType : "—"}
+              </p>
+
+              <p>
+                <strong>Current Membership Type:</strong>{" "}
+                {"currentMembershipType" in data ? data.currentMembershipType : "—"}
+              </p>
+
               <p>
                 <strong>Date Issued:</strong>{" "}
-                {data.issuedAt ? new Date(data.issuedAt).toDateString() : "—"}
+                {"issuedAt" in data && data.issuedAt
+                  ? new Date(data.issuedAt).toDateString()
+                  : "—"}
               </p>
-              <p><strong>Verification Code:</strong> {certId}</p>
+
+              <p>
+                <strong>Current Membership No:</strong>{" "}
+                {"currentCertificateId" in data ? data.currentCertificateId : "—"}
+              </p>
+
+              <p>
+                <strong>Member Status:</strong>{" "}
+                {"status" in data ? String(data.status) : "—"}
+              </p>
             </div>
           </>
         ) : (
@@ -73,8 +104,12 @@ export default async function VerifyMembershipPage({
 
             {/* TEMP DEBUG (remove after confirmed) */}
             <div className="mt-4 text-xs text-gray-400 text-left bg-gray-50 p-3 rounded">
-              <div><strong>Debug raw certId:</strong> {String(rawCertId)}</div>
-              <div><strong>Debug normalized certId:</strong> {String(certId)}</div>
+              <div>
+                <strong>Debug raw certId:</strong> {String(rawCertId)}
+              </div>
+              <div>
+                <strong>Debug normalized certId:</strong> {String(certId)}
+              </div>
             </div>
           </>
         )}
