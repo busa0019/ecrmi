@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import { connectDB } from "@/lib/db";
 import Course from "@/models/Course";
 import CourseGrid from "@/components/CourseGrid";
