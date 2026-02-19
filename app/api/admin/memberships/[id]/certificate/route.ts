@@ -33,9 +33,7 @@ function getMembershipCode(membershipType: string) {
   if (t.includes("affiliate")) return "AF"; // avoids clash with Associate
   if (t.includes("associate")) return "A";
   if (t.includes("technical")) return "T";
-  if (t.includes("graduate")) return "G";
-  if (t.includes("fellow")) return "F";
-  if (t.includes("professional")) return "P";
+  if (t.includes("professional") && t.includes("membership")) return "PM";
 
   return "M";
 }

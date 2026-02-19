@@ -11,14 +11,14 @@ const steps = [
   "Review & Submit",
 ];
 
-const MEMBERSHIP_TYPES = [
-  "Affiliate Member",
-  "Graduate Member",
-  "Associate Member",
-  "Technical Member",
-  "Professional Fellow",
-  "Fellow",
-  "Honorary Member",
+// ✅ label shows price, value stays clean (what you store in DB)
+const MEMBERSHIP_TYPES: { value: string; label: string }[] = [
+  { value: "Affiliate Member", label: "Affiliate Member (₦65,000)" },
+  { value: "Associate Member", label: "Associate Member (₦75,000)" },
+  { value: "Technical Member", label: "Technical Member (₦100,000)" },
+  { value: "Professional Fellowship", label: "Professional Fellowship (₦200,000)" },
+  { value: "Professional Membership", label: "Professional Membership (₦120,000)" },
+  { value: "Honorary Membership", label: "Honorary Membership (Free)" },
 ];
 
 function isValidEmail(email: string) {
@@ -47,6 +47,11 @@ export default function MembershipApplyPage() {
 
     declaration: false,
   });
+
+  const selectedMembershipLabel =
+    MEMBERSHIP_TYPES.find((m) => m.value === form.membershipType)?.label ||
+    form.membershipType ||
+    "—";
 
   /* ================= FILE UPLOAD ================= */
   async function uploadFile(file: File) {
@@ -141,7 +146,7 @@ export default function MembershipApplyPage() {
       // ✅ keep your original keys, but also send aliases to match schema
       const payload = {
         ...form,
-        requestedMembershipType: form.membershipType, // schema-friendly alias
+        requestedMembershipType: form.membershipType, // ✅ this is now clean value (no price)
         certificatesUrl: form.certificateUrls, // schema-friendly alias
       };
 
@@ -257,9 +262,10 @@ export default function MembershipApplyPage() {
                 }
               >
                 <option value="">Select membership type *</option>
+
                 {MEMBERSHIP_TYPES.map((m) => (
-                  <option key={m} value={m}>
-                    {m}
+                  <option key={m.value} value={m.value}>
+                    {m.label}
                   </option>
                 ))}
               </select>
@@ -396,10 +402,51 @@ export default function MembershipApplyPage() {
               <p className="text-xs text-gray-500">
                 Accepted formats: PDF, JPG, PNG
               </p>
+               
+               <div className="rounded-2xl border border-amber-300/60 bg-gradient-to-b from-amber-50 to-white p-4 sm:p-5">
+  <div className="flex items-start gap-3">
+    <div className="mt-0.5 rounded-xl bg-amber-100 p-2">
+      <AlertTriangle className="w-5 h-5 text-amber-700" />
+    </div>
 
+    <div className="flex-1">
+      <div className="flex flex-wrap items-center gap-2">
+        <p className="font-semibold text-slate-900">Payment Required</p>
+        <span className="inline-flex items-center rounded-full bg-amber-200/60 px-2.5 py-1 text-xs font-semibold text-amber-900">
+          Form Fee: ₦10,000
+        </span>
+      </div>
+
+      <p className="mt-1 text-sm text-slate-700">
+        Please pay the <strong>total amount</strong>:
+        <strong> (selected membership fee + ₦10,000 form fee)</strong> and upload
+        your payment receipt.
+      </p>
+
+      <div className="mt-3 grid gap-1 text-sm text-slate-800">
+        <p>
+          <strong>Bank:</strong> UBA
+        </p>
+        <p>
+          <strong>Account Name:</strong> Emergency, Crisis &amp; Risk Management
+          Institute (ECRMI)
+        </p>
+        <p>
+          <strong>Account Number:</strong> 1013635573
+        </p>
+      </div>
+
+      <p className="mt-3 text-xs text-slate-600">
+        <strong>Selected Membership:</strong> {selectedMembershipLabel}
+      </p>
+    </div>
+  </div>
+</div>
+    
               <label className="text-sm font-medium">
-                Payment Receipt (optional)
+                 Payment Receipt (Required — Membership Fee + ₦10,000 Form Fee)
               </label>
+
               <input
                 type="file"
                 accept=".pdf,.jpg,.png"
@@ -489,7 +536,7 @@ export default function MembershipApplyPage() {
                       <dt className="text-slate-600">Type</dt>
                       <dd className="text-right">
                         <span className="inline-flex items-center rounded-full bg-blue-600/10 px-3 py-1 text-xs font-semibold text-blue-700">
-                          {form.membershipType || "—"}
+                          {selectedMembershipLabel}
                         </span>
                       </dd>
                     </div>

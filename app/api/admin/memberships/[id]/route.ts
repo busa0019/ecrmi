@@ -11,14 +11,12 @@ function getMembershipCode(membershipType: string) {
   const t = String(membershipType || "").toLowerCase();
 
   // more specific first
-  if (t.includes("professional") && t.includes("fellow")) return "PF";
+  if (t.includes("professional") && t.includes("fellowship")) return "PF";
   if (t.includes("honorary")) return "H";
   if (t.includes("affiliate")) return "AF"; // avoids clash with Associate
   if (t.includes("associate")) return "A";
   if (t.includes("technical")) return "T";
-  if (t.includes("graduate")) return "G";
-  if (t.includes("fellow")) return "F";
-  if (t.includes("professional")) return "P";
+  if (t.includes("professional") && t.includes("membership")) return "PM";
 
   return "M"; // fallback
 }

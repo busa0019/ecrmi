@@ -7,6 +7,7 @@ import { PDFDocument, StandardFonts } from "pdf-lib";
 import QRCode from "qrcode";
 import fs from "fs";
 import path from "path";
+import fontkit from "@pdf-lib/fontkit";
 
 type Layout = {
   page: { w: number; h: number };
@@ -18,14 +19,16 @@ type Layout = {
 
 function getTemplateFile(membershipType: string) {
   const t = String(membershipType || "").toLowerCase();
-
+  
   if (t.includes("honorary")) return "honorary.jpeg";
-  if (t.includes("professional")) return "professional.jpeg";
-  if (t.includes("fellow")) return "fellow.jpeg";
+  if (t.includes("professional") && (t.includes("fellowship") || t.includes("fellow"))) {
+    return "professional-fellowship.jpeg";
+  }
+  if (t.includes("professional")) return "professional-membership.jpeg";
   if (t.includes("technical")) return "technical.jpeg";
   if (t.includes("associate")) return "associate.jpeg";
-  if (t.includes("graduate")) return "graduate.jpeg";
   if (t.includes("affiliate")) return "affiliate.jpeg";
+  
 
   return "associate.jpeg";
 }
@@ -49,53 +52,48 @@ function formatDateForCertificate(date: Date) {
 
 const DEFAULT_LAYOUT: Layout = {
   page: { w: 842, h: 595 },
-  name: { y: 380, size: 36 },
+  name: { y: 700, size: 36 },
   membershipNo: { x: 235, y: 115, size: 11 },
-  date: { x: 410, y: 295, size: 12 },
+  date: { x: 410, y: 295, size: 20 },
   qr: { x: 680, y: 70, w: 100, h: 100 },
 };
 
 const LAYOUTS: Record<string, Partial<Layout>> = {
   "associate.jpeg": {
-    membershipNo: { x: 235, y: 96, size: 11 },
-    date: { x: 510, y: 272, size: 12 },
-    qr: { x: 685, y: 85, w: 100, h: 100 },
+    membershipNo: { x: 212, y: 174, size: 16 },
+    date: { x: 460, y: 493, size: 17 },
+    qr: { x: 590, y: 170, w: 100, h: 100 },
   },
 
   "affiliate.jpeg": {
-    membershipNo: { x: 235, y: 101, size: 11 },
-    date: { x: 510, y: 273, size: 12 },
-    qr: { x: 670, y: 85, w: 100, h: 100 },
+    membershipNo: { x: 212, y: 185, size: 15 },
+    date: { x: 460, y: 499, size: 17 },
+    qr: { x: 590, y: 170, w: 100, h: 100 },
   },
 
-  "graduate.jpeg": {
-    membershipNo: { x: 235, y: 100, size: 11 },
-    date: { x: 515, y: 272, size: 12 },
-    qr: { x: 685, y: 85, w: 100, h: 100 },
-  },
 
   "technical.jpeg": {
-    membershipNo: { x: 233, y: 108, size: 11 },
-    date: { x: 510, y: 272, size: 12 },
-    qr: { x: 665, y: 85, w: 100, h: 100 },
+    membershipNo: { x: 213, y: 197, size: 17 },
+    date: { x: 460, y: 495, size: 18 },
+    qr: { x: 590, y: 170, w: 100, h: 100 },
   },
 
-  "fellow.jpeg": {
-    membershipNo: { x: 238, y: 107, size: 11 },
-    date: { x: 505, y: 270, size: 12 },
-    qr: { x: 662, y: 88, w: 100, h: 100 },
+  "professional-fellowship.jpeg": {
+    membershipNo: { x: 215, y: 195, size: 15 },
+    date: { x: 460, y: 492, size: 17 },
+    qr: { x: 590, y: 170, w: 100, h: 100 },
   },
 
-  "professional.jpeg": {
-    membershipNo: { x: 238, y: 107, size: 11 },
-    date: { x: 505, y: 270, size: 12 },
-    qr: { x: 660, y: 87, w: 100, h: 100 },
+  "professional-membership.jpeg": {
+    membershipNo: { x: 212, y: 183, size: 17 },
+    date: { x: 470, y: 496, size: 17 },
+    qr: { x: 590, y: 170, w: 100, h: 100 },
   },
 
   "honorary.jpeg": {
-    membershipNo: { x: 235, y: 102, size: 11 },
-    date: { x: 510, y: 272, size: 12 },
-    qr: { x: 685, y: 87, w: 100, h: 100 },
+    membershipNo: { x: 212, y: 186, size: 17 },
+    date: { x: 465, y: 494, size: 17 },
+    qr: { x: 590, y: 170, w: 100, h: 100 },
   },
 };
 
@@ -184,21 +182,38 @@ export async function GET(
   const issuedAt = app.reviewedAt ?? app.updatedAt ?? app.createdAt ?? new Date();
   const issuedText = formatDateForCertificate(new Date(issuedAt));
 
-  const pdfDoc = await PDFDocument.create();
-  const page = pdfDoc.addPage([layout.page.w, layout.page.h]);
+   const pdfDoc = await PDFDocument.create();
+   pdfDoc.registerFontkit(fontkit);
 
-  const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
-  const bold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+const serifBytes = fs.readFileSync(
+  path.join(process.cwd(), "public", "fonts", "Tinos-Regular.ttf")
+);
+const sansBoldBytes = fs.readFileSync(
+  path.join(process.cwd(), "public", "fonts", "LiberationSans-Bold.ttf")
+);
 
-  // Background template
-  const templateBytes = fs.readFileSync(templatePath);
-  const template = await pdfDoc.embedJpg(templateBytes);
+const serif = await pdfDoc.embedFont(serifBytes);
+const sansBold = await pdfDoc.embedFont(sansBoldBytes);
 
-  page.drawImage(template, {
-    x: 0,
-    y: 0,
-    width: layout.page.w,
-    height: layout.page.h,
+
+   const templateBytes = fs.readFileSync(templatePath);
+   const template = await pdfDoc.embedJpg(templateBytes);
+
+
+   const page = pdfDoc.addPage([template.width, template.height]);
+
+
+   layout.page.w = template.width;
+   layout.page.h = template.height;
+
+   const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
+   const bold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+
+   page.drawImage(template, {
+   x: 0,
+   y: 0,
+   width: template.width,
+   height: template.height,
   });
 
   // Name (centered)

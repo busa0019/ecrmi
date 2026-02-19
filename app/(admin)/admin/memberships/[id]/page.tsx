@@ -5,12 +5,11 @@ import { useParams } from "next/navigation";
 
 const MEMBERSHIP_TYPES = [
   "Affiliate Member",
-  "Graduate Member",
   "Associate Member",
   "Technical Member",
-  "Professional Fellow",
-  "Fellow",
-  "Honorary Member",
+  "Professional Fellowship",
+  "Professional Membership",
+  "Honorary Fellowship",
 ];
 
 export default function AdminMembershipReviewPage() {

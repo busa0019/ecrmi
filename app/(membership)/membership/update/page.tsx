@@ -5,12 +5,11 @@ import { CheckCircle, AlertTriangle } from "lucide-react";
 
 const MEMBERSHIP_TYPES = [
   "Affiliate Member",
-  "Graduate Member",
   "Associate Member",
   "Technical Member",
-  "Professional Fellow",
-  "Fellow",
-  "Honorary Member",
+  "Professional Fellowship",
+  "Professional Membership",
+  "Honorary Fellowship",
 ];
 
 function isValidEmail(email: string) {

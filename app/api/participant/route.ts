@@ -63,7 +63,7 @@ export async function POST(req: Request) {
     }
   }
 
-  // 2) Your existing participant logic (unchanged)
+  // 2) existing participant logic (unchanged)
   const existing = await Participant.findOne({ email: cleanEmail });
 
   if (existing?.nameLocked) {

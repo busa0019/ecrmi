@@ -32,7 +32,6 @@ function formatMoney(amount: number) {
   })}`;
 }
 
-
 function getArticleForMembershipType(type: string) {
   const t = String(type || "").trim().toLowerCase();
 
@@ -40,7 +39,7 @@ function getArticleForMembershipType(type: string) {
   if (t.startsWith("affiliate")) return "an";
   if (t.startsWith("associate")) return "an";
 
-  // fallback 
+  // fallback
   const first = t[0] || "";
   return "aeiou".includes(first) ? "an" : "a";
 }
@@ -50,11 +49,9 @@ function getEcrmiAcronym(membershipType: string) {
   const t = String(membershipType || "").toLowerCase();
 
   if (t.includes("honorary")) return "HECRMI";
-  if (t.includes("professional") && t.includes("fellow")) return "PFECRMI";
-  if (t.includes("fellow")) return "FECRMI";
-  if (t.includes("professional")) return "PMECRMI";
+  if (t.includes("professional") && t.includes("fellowship")) return "PFECRMI";
+  if (t.includes("professional") && t.includes("membership")) return "PMECRMI";
   if (t.includes("technical")) return "TECRMI";
-  if (t.includes("graduate")) return "GECRMI";
   if (t.includes("affiliate")) return "AFECRMI";
   if (t.includes("associate")) return "AECRMI";
 
@@ -134,8 +131,15 @@ type FeeRow = { label: string; amount: number };
 function getFeeRows(membershipType: string): FeeRow[] {
   const t = String(membershipType || "").toLowerCase();
 
-  // same for Associate / Graduate / Affiliate
-  if (t.includes("associate") || t.includes("graduate") || t.includes("affiliate")) {
+  if (t.includes("affiliate")) {
+    return [
+      { label: "Induction Fees", amount: 40000 },
+      { label: "Annual Subscription", amount: 15000 },
+      { label: "Pre-Induction Training Fee", amount: 10000 },
+    ];
+  }
+
+  if (t.includes("associate")) {
     return [
       { label: "Induction Fees", amount: 50000 },
       { label: "Annual Subscription", amount: 15000 },
@@ -145,35 +149,36 @@ function getFeeRows(membershipType: string): FeeRow[] {
 
   if (t.includes("technical")) {
     return [
-      { label: "Induction Fees", amount: 50000 },
+      { label: "Induction Fees", amount: 60000 },
       { label: "Annual Subscription", amount: 20000 },
       { label: "Pre-Induction Training Fee", amount: 20000 },
     ];
   }
 
-  if (t.includes("professional") && !t.includes("fellow")) {
+  if (
+    t.includes("professional") &&
+    (t.includes("fellowship") || t.includes("fellow"))
+  ) {
     return [
-      { label: "Induction Fees", amount: 75000 },
-      { label: "Annual Subscription", amount: 15000 },
-      { label: "Pre-Induction Training Fee", amount: 10000 },
+      { label: "Induction Fees", amount: 100000 },
+      { label: "Annual Subscription", amount: 50000 },
+      { label: "Pre-Induction Training Fee", amount: 50000 },
     ];
   }
 
-  if (t.includes("fellow")) {
+  if (t.includes("professional") && t.includes("membership")) {
     return [
-      { label: "Induction Fees", amount: 160000 },
-      { label: "Annual Subscription", amount: 25000 },
+      { label: "Induction Fees", amount: 70000 },
+      { label: "Annual Subscription", amount: 30000 },
+      { label: "Pre-Induction Training Fee", amount: 20000 },
     ];
   }
 
+  // ✅ Honorary is free -> no fee table shown
+  if (t.includes("honorary")) {
+    return [];
+  }
 
-if (t.includes("honorary")) {
-  return [
-    { label: "Induction Fees", amount: 0 },
-    { label: "Annual Subscription", amount: 0 },
-    { label: "Documentation/Processing Fee", amount: 0 },
-  ];
-}
   return [];
 }
 
@@ -394,7 +399,9 @@ export async function GET(
   y -= 28;
 
   // Subject with correct article
-  const subject = `ELECTION AS ${article.toUpperCase()} ${String(membershipType).toUpperCase()}`;
+  const subject = `ELECTION AS ${article.toUpperCase()} ${String(
+    membershipType
+  ).toUpperCase()}`;
   const subjectSize = 14;
   const subjectW = bold.widthOfTextAtSize(subject, subjectSize);
   const subjectX = (pageWidth - subjectW) / 2;
@@ -433,7 +440,10 @@ export async function GET(
       ? [
           { text: "Your membership number is " },
           { text: String(certId), bold: true },
-          { text: " which should be quoted in all correspondence with the Institute. " },
+          {
+            text:
+              " which should be quoted in all correspondence with the Institute. ",
+          },
           {
             text:
               "In accordance with provision of the institute's enabling laws, rules and regulations, approved members in your category are eligible to pay the sum of ",
@@ -444,7 +454,15 @@ export async function GET(
       : [
           { text: "Your membership number is " },
           { text: String(certId), bold: true },
-          { text: " which should be quoted in all correspondence with the Institute." },
+          {
+            text:
+              " which should be quoted in all correspondence with the Institute. ",
+          },
+          // ✅ Honorary: formal free-of-charge sentence (no amount, no table)
+          {
+            text:
+              "Please be informed that this membership category is conferred free of charge and attracts no induction fee, annual subscription or processing fee.",
+          },
         ],
     LEFT,
     y
@@ -511,13 +529,44 @@ export async function GET(
     // ✅ space between credentials paragraph and congratulations
     y -= 8;
   } else {
-    // Honorary / no fees
+    // ✅ Honorary: keep everything, but remove money/payment references
+    y = drawWrappedText(
+      "Kindly be informed that no Annual Subscription is payable for this membership category and you are entitled to the following privileges as stated:",
+      LEFT,
+      y
+    );
+
+    // Privileges (same as paid)
+    y = drawWrappedText(
+      "1. Professional training special courses and conferences at reduced cost.",
+      LEFT + 20,
+      y
+    );
+    y = drawWrappedText(
+      "2. Membership of branch of the Institute in your locality.",
+      LEFT + 20,
+      y
+    );
+    y = drawWrappedText(
+      "3. Regular supply of the Institute magazines and newsletter.",
+      LEFT + 20,
+      y
+    );
     y = drawWrappedSegs(
       [
-        { text: 'The use of the acronym "' },
+        { text: '4. The use of the acronym "' },
         { text: acronym, bold: true },
-        { text: '" after your name is hereby authorized.' },
+        { text: '" after your name.' },
       ],
+      LEFT + 20,
+      y
+    );
+
+    y -= 8;
+
+    // Compliance paragraph (same, but without payment)
+    y = drawWrappedText(
+      "Your election will remain valid ninety (90) days after which will be nullified if not formalized by completion of the institute's required documentation and induction formalities. Please note that you are required to attend the institute's pre-induction training and induction ceremony which is compulsory for every inductee. Also note that this admission letter is provisional and would be withdrawn and your membership cancelled if any irregularity is discovered in your credentials.",
       LEFT,
       y
     );
@@ -532,15 +581,15 @@ export async function GET(
   );
 
   // ---------- FOOTER / SIGNATURE ----------
-  y -= 14;
+ 
+y -= 14;
 
-  // Keeps footer in a nice lower area if there is space,
-  // but prevents it from dropping into the printed letterhead footer.
-  const FOOTER_TARGET_Y = 190; // lower target (brings footer down)
-  const FOOTER_MIN_Y = 120; // don't go into printed footer text
 
-  y = Math.min(y, FOOTER_TARGET_Y);
-  if (y < FOOTER_MIN_Y) y = FOOTER_MIN_Y;
+const FOOTER_TARGET_Y = feeRows.length ? 190 : 290; 
+const FOOTER_MIN_Y = 120; 
+
+y = Math.min(y, FOOTER_TARGET_Y);
+if (y < FOOTER_MIN_Y) y = FOOTER_MIN_Y;
 
   page.drawText("Yours faithfully,", { x: LEFT, y, size: 11, font });
   y -= 18;
@@ -554,9 +603,24 @@ export async function GET(
   y -= 14;
 
   // Signature image (jpeg/jpg/png) - smaller
-  const sigJpeg = path.join(process.cwd(), "public", "certificates", "signature.jpeg");
-  const sigJpg = path.join(process.cwd(), "public", "certificates", "signature.jpg");
-  const sigPng = path.join(process.cwd(), "public", "certificates", "signature.png");
+  const sigJpeg = path.join(
+    process.cwd(),
+    "public",
+    "certificates",
+    "signature.jpeg"
+  );
+  const sigJpg = path.join(
+    process.cwd(),
+    "public",
+    "certificates",
+    "signature.jpg"
+  );
+  const sigPng = path.join(
+    process.cwd(),
+    "public",
+    "certificates",
+    "signature.png"
+  );
 
   let sigBytes: Buffer | null = null;
   let sigType: "jpg" | "png" | null = null;
@@ -574,7 +638,9 @@ export async function GET(
 
   if (sigBytes && sigType) {
     const sigImg =
-      sigType === "png" ? await pdfDoc.embedPng(sigBytes) : await pdfDoc.embedJpg(sigBytes);
+      sigType === "png"
+        ? await pdfDoc.embedPng(sigBytes)
+        : await pdfDoc.embedJpg(sigBytes);
 
     page.drawImage(sigImg, {
       x: LEFT,
@@ -595,7 +661,12 @@ export async function GET(
   page.drawText("08113907191", { x: LEFT, y, size: 11, font });
   y -= 12;
 
-  page.drawText("Email: registrarecrmi@yahoo.com", { x: LEFT, y, size: 11, font });
+  page.drawText("Email: registrarecrmi@yahoo.com", {
+    x: LEFT,
+    y,
+    size: 11,
+    font,
+  });
 
   const pdfBytes = await pdfDoc.save();
   const buffer = Buffer.from(pdfBytes);
