@@ -10,7 +10,6 @@ export default function StartPage() {
   const [mounted, setMounted] = useState(false);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
-  const [accessCode, setAccessCode] = useState("");
   const [loading, setLoading] = useState(false);
   const [resumeDetected, setResumeDetected] = useState(false);
   const [error, setError] = useState("");
@@ -32,14 +31,14 @@ export default function StartPage() {
   /* ================= CONTINUE ================= */
   async function handleContinue() {
     setError("");
-    if (!name || !email || !accessCode || loading) return;
+    if (!name || !email || loading) return;
 
     setLoading(true);
 
     const res = await fetch("/api/participant", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, email, accessCode }),
+      body: JSON.stringify({ name, email}),
     });
 
     const data = await res.json().catch(() => ({}));
@@ -140,32 +139,9 @@ export default function StartPage() {
             </p>
           </div>
 
-          {/* ACCESS CODE */}
-          <div>
-            <label className="block text-sm font-semibold text-slate-200 mb-2">
-              Training Access Code
-            </label>
-
-            <div className="relative">
-              <KeyRound className="w-5 h-5 text-slate-400 absolute left-4 top-1/2 -translate-y-1/2" />
-              <input
-                className="w-full pl-12 rounded-xl bg-[#020617]/80 border border-slate-600 px-4 py-4 text-white
-                           focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600"
-                placeholder="e.g. ECRMI-TRN-8H2K9D"
-                value={accessCode}
-                onChange={(e) => setAccessCode(e.target.value)}
-              />
-            </div>
-
-            <p className="mt-2 text-xs text-slate-400">
-              You will receive this code after payment confirmation.
-            </p>
-          </div>
-
-          {/* CTA */}
           <button
             onClick={handleContinue}
-            disabled={!name || !email || !accessCode || loading}
+            disabled={!name || !email  || loading}
             className="w-full rounded-xl bg-blue-700 hover:bg-blue-800 py-4 font-bold text-white
                        disabled:opacity-50 disabled:cursor-not-allowed transition"
           >

@@ -62,6 +62,14 @@ export default function TestPage() {
       return;
     }
 
+      const unlocked =
+      sessionStorage.getItem(`courseAccess:${courseId}`) === "1";
+
+    if (!unlocked) {
+      router.push(`/courses/${courseId}`);
+      return;
+    }
+
     async function init() {
       const statusRes = await fetch("/api/attempts/status", {
         method: "POST",

@@ -27,9 +27,16 @@ export async function GET() {
   return NextResponse.json(codes);
 }
 
-export async function POST() {
+export async function POST(req: Request) {
   const admin = await requireAdmin();
   if (!admin) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  const body = await req.json().catch(() => ({}));
+  const courseId = String(body?.courseId || "").trim();
+
+  if (!courseId) {
+    return NextResponse.json({ error: "courseId is required" }, { status: 400 });
+  }
 
   await connectDB();
 
@@ -40,6 +47,7 @@ export async function POST() {
     if (!exists) {
       const doc = await TrainingAccessCode.create({
         code,
+        courseId, // ✅ NEW: bind code to course
         status: "unused",
         createdBy: String((admin as any)?._id || (admin as any)?.email || ""),
       });
