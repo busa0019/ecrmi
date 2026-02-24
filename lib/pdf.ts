@@ -227,7 +227,7 @@ export async function generatePDF(
 
   /* ================= QR CODE ================= */
 
-  const verifyUrl = `https://training.ecrmi.org/verify/${certificateId}`;
+  const verifyUrl = `https://www.ecrmiportal.cloud/verify/${certificateId}`;
   const qrDataUrl = await generateQR(verifyUrl);
 
   const qrImageBytes = Buffer.from(
