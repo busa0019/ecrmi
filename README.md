@@ -163,7 +163,7 @@ Create a `.env` file:
 
 NEXT_PUBLIC_BASE_URL=https://ecrmiportal.cloud\
 NEXT_PUBLIC_APP_URL=https://ecrmiportal.cloud\
-MONGODB_URI=mongodb+srv://`<user>`{=html}:`<pass>`{=html}@`<cluster>`{=html}/`<db>`{=html}?retryWrites=true&w=majority\
+MONGODB_URI=mongodb+srv://
 JWT_SECRET=your_secret_here
 
 > ⚠ QR codes are embedded during PDF generation. Changing base URL later
@@ -189,7 +189,6 @@ npm start
 
 ## 🖥 VPS Deployment (PM2 + Nginx)
 
-cd /var/www/ecrmi\
 git pull\
 npm ci\
 npm run build\
