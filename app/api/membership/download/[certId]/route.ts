@@ -250,7 +250,7 @@ const sansBold = await pdfDoc.embedFont(sansBoldBytes);
   const baseUrl =
     process.env.NEXT_PUBLIC_APP_URL ||
     process.env.NEXT_PUBLIC_BASE_URL ||
-    "https://www.ecrmiportal.cloud/";
+     "http://localhost:3000";
 
   const qrDataUrl = await QRCode.toDataURL(
     `${baseUrl}/membership/verify/${encodeURIComponent(String(certId))}`
