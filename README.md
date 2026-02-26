@@ -161,9 +161,12 @@ Main collections:
 
 Create a `.env` file:
 
-NEXT_PUBLIC_BASE_URL=https://ecrmiportal.cloud\
-NEXT_PUBLIC_APP_URL=https://ecrmiportal.cloud\
+NEXT_PUBLIC_BASE_URL=http://localhost:3000/
+
+NEXT_PUBLIC_APP_URL=http://localhost:3000/
+
 MONGODB_URI=mongodb+srv://
+
 JWT_SECRET=your_secret_here
 
 > ⚠ QR codes are embedded during PDF generation. Changing base URL later
