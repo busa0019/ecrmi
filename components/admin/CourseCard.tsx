@@ -53,7 +53,7 @@ export default function CourseCard({
           {/* ACTIONS – hover only */}
           <div className="flex gap-2 shrink-0 self-start opacity-0 group-hover:opacity-100 transition-opacity">
             <Link
-              href={`/admin/courses/${course._id}`}
+              href={`/admin/courses/${course._id}/edit`}
               className="p-2 border rounded-lg bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-teal-500/50"
               aria-label="Edit course"
             >
