@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import Link from "next/link";
 import Image from "next/image";
 import { connectDB } from "@/lib/db";
@@ -6,15 +7,20 @@ import { FileText, AlertTriangle, ArrowLeft } from "lucide-react";
 import CourseStatus from "./status";
 import StartAssessmentCTA from "./StartAssessmentCTA";
 
-function filenameFromUrl(url: string) {
-  try {
-    const u = new URL(url);
-    const last = u.pathname.split("/").filter(Boolean).pop() || "";
-    return decodeURIComponent(last) || "Download material";
-  } catch {
-    const last = String(url).split("/").filter(Boolean).pop() || "";
-    return last || "Download material";
-  }
+function prettyMaterialName(url: string, index: number) {
+  const clean = url.split("?")[0];
+  const ext = clean.split(".").pop()?.toLowerCase() || "";
+
+  const type =
+    ext === "pdf"
+      ? "PDF"
+      : ext === "mp3" || ext === "wav" || ext === "m4a" || ext === "aac"
+      ? "Audio"
+      : ext === "zip"
+      ? "ZIP"
+      : "File";
+
+  return `Material ${index + 1} (${type})`;
 }
 
 export default async function CourseIntroPage({
@@ -24,6 +30,15 @@ export default async function CourseIntroPage({
 }) {
   const { courseId } = await params;
 
+  // ✅ prevent CastError for invalid ids like "dashboard"
+  if (!mongoose.Types.ObjectId.isValid(courseId)) {
+    return (
+      <main className="min-h-screen flex items-center justify-center">
+        <p className="text-gray-600">Course not found.</p>
+      </main>
+    );
+  }
+  
   await connectDB();
   const course: any = await Course.findById(courseId).lean();
 
@@ -107,28 +122,28 @@ export default async function CourseIntroPage({
           </div>
 
           {/* ===== COURSE MATERIALS (supports multiple) ===== */}
-          {materialUrls.length > 0 && (
-            <div className="mb-10">
-              <h2 className="text-sm font-semibold text-slate-800 mb-3">
-                Course Materials
-              </h2>
+       {materialUrls.length > 0 && (
+  <div className="mb-10">
+    <h2 className="text-sm font-semibold text-slate-800 mb-3">
+      Course Materials
+    </h2>
 
-              <div className="space-y-2">
-                {materialUrls.map((url, idx) => (
-                  <a
-                    key={url + idx}
-                    href={url}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="inline-flex items-center gap-2 text-blue-600 hover:underline text-sm break-all"
-                  >
-                    <FileText className="w-5 h-5" />
-                    {filenameFromUrl(url)}
-                  </a>
-                ))}
-              </div>
-            </div>
-          )}
+    <div className="space-y-2">
+      {materialUrls.map((url, idx) => (
+        <a
+          key={url + idx}
+          href={url}
+          target="_blank"
+          rel="noreferrer"
+          className="inline-flex items-center gap-2 text-blue-600 hover:underline text-sm break-all"
+        >
+          <FileText className="w-5 h-5" />
+          {prettyMaterialName(url, idx)}
+        </a>
+      ))}
+    </div>
+  </div>
+)}
 
           {/* ===== PRIMARY CTA ===== */}
           <div className="flex justify-center sm:justify-start">
