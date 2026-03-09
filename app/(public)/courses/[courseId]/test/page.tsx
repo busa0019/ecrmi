@@ -258,7 +258,7 @@ export default function TestPage() {
           </p>
         </div>
 
-        <Timer seconds={300} onExpire={submitTest} />
+        <Timer seconds={2700} onExpire={submitTest} />
       </div>
 
       <div className="w-full bg-gray-200 h-2 rounded">
