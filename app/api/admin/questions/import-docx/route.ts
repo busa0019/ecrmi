@@ -32,8 +32,7 @@ function parseQuestionsFromText(text: string) {
   }[] = [];
 
   for (const block of blocks) {
-    // Match question line: "1. Safety in the workplace primarily refers to:"
-    const qMatch = block.match(/^\d+\.\s*(.+?)(?=\n\s*A[\.\)]\s)/s);
+    const qMatch = block.match(/^\d+\.\s*([\s\S]+?)(?=\n\s*A[\.\)]\s)/);
     if (!qMatch) continue; // skip anything that doesn't look like a question block
 
     const questionText = norm(qMatch[1]);
