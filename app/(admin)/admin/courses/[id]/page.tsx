@@ -8,6 +8,7 @@ import Course from "@/models/Course";
 import Question from "@/models/Question";
 import QuestionForm from "@/components/admin/QuestionForm";
 import QuestionList from "@/components/admin/QuestionList";
+import DocxQuestionImport from "@/components/admin/DocxQuestionImport";
 import Link from "next/link";
 
 export default async function ManageQuestions({
@@ -17,7 +18,7 @@ export default async function ManageQuestions({
 }) {
   const { id } = await params;
 
-  // ✅ VERY IMPORTANT: stop "new" from hitting MongoDB
+  // 
   if (id === "new") {
     redirect("/admin/courses/new");
   }
@@ -72,8 +73,10 @@ export default async function ManageQuestions({
         </Link>
       </div>
 
-      <QuestionList questions={questions} />
+      <DocxQuestionImport courseId={course._id} />
       <QuestionForm courseId={course._id} />
+      <QuestionList questions={questions} />
+     
     </div>
   );
 }
