@@ -22,8 +22,9 @@ export async function POST(req: Request) {
 
   const existing = await Participant.findOne({ email: cleanEmail });
 
+  // ✅ CHANGE: do NOT block locked users; just don't update their name
   if (existing?.nameLocked) {
-    return NextResponse.json({ error: "Name is locked" }, { status: 403 });
+    return NextResponse.json({ success: true, nameLocked: true });
   }
 
   await Participant.findOneAndUpdate(

@@ -50,18 +50,22 @@ export default async function CertificatesAdmin() {
       ) : (
         <div className="bg-white border rounded-xl overflow-x-auto">
           <table className="w-full text-sm">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="border p-3 text-left">Name</th>
-                <th className="border p-3 text-left">Email</th>
-                <th className="border p-3 text-left">Course</th>
-                <th className="border p-3 text-left">Issued</th>
-                <th className="border p-3 text-center">Actions</th>
-              </tr>
-            </thead>
+           <thead className="bg-gray-50">
+  <tr>
+    <th className="border p-3 text-left">Certificate No</th>
+    <th className="border p-3 text-left">Name</th>
+    <th className="border p-3 text-left">Email</th>
+    <th className="border p-3 text-left">Course</th>
+    <th className="border p-3 text-left">Issued</th>
+    <th className="border p-3 text-center">Actions</th>
+  </tr>
+</thead>
             <tbody>
               {certificates.map((c: any) => (
                 <tr key={c._id.toString()} className="hover:bg-gray-50">
+                 <td className="border p-3 font-medium ">
+                  {c.certificateId || "—"}
+                   </td>
                   <td className="border p-3 font-medium">
                     {c.participantName || "—"}
                   </td>
@@ -74,21 +78,25 @@ export default async function CertificatesAdmin() {
                   <td className="border p-3 text-slate-500">
                     {c.createdAt?.toISOString().slice(0, 10)}
                   </td>
-                  <td className="border p-3 text-center">
-                    <form
-                      action="/api/admin/certificates/revoke"
-                      method="POST"
-                    >
-                      <input
-                        type="hidden"
-                        name="id"
-                        value={c._id.toString()}
-                      />
-                      <button className="text-red-600 hover:underline text-sm">
-                        Revoke
-                      </button>
-                    </form>
-                  </td>
+              <td className="border p-3 text-center">
+  <div className="flex items-center justify-center gap-3">
+    <a
+      href={`/api/certificates/${c.certificateId}`}
+      className="text-blue-600 hover:underline text-sm"
+      target="_blank"
+      rel="noreferrer"
+    >
+      Download
+    </a>
+
+    <form action="/api/admin/certificates/revoke" method="POST">
+      <input type="hidden" name="id" value={c._id.toString()} />
+      <button className="text-red-600 hover:underline text-sm">
+        Revoke
+      </button>
+    </form>
+  </div>
+</td>
                 </tr>
               ))}
             </tbody>
