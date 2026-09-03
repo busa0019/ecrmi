@@ -80,7 +80,7 @@ export default function MembershipStatusPage() {
                   {data.membershipType}
                 </p>
 
-                {/* ✅ UPDATED CERTIFICATE DOWNLOAD */}
+                {/* ✅ CERTIFICATE DOWNLOAD (Always visible) */}
                 {data.certificateId && (
                   <a
                     href={`/api/membership/download/${data.certificateId}`}
@@ -92,17 +92,20 @@ export default function MembershipStatusPage() {
                   </a>
                 )}
 
-                {/* ✅ OPTIONAL: dynamic letter route if created */}
-                {data.certificateId && (
-                  <a
-                    href={`/api/membership/download-letter/${data.certificateId}`}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="btn btn-outline w-full"
-                  >
-                    Download Membership Letter
-                  </a>
-                )}
+                {/* ✅ MEMBERSHIP LETTER DOWNLOAD (Hidden for Chartered) */}
+                {data.certificateId &&
+                  !String(data.membershipType || "")
+                    .toLowerCase()
+                    .includes("charter") && (
+                    <a
+                      href={`/api/membership/download-letter/${data.certificateId}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="btn btn-outline w-full"
+                    >
+                      Download Membership Letter
+                    </a>
+                  )}
               </>
             )}
 

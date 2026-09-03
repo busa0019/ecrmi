@@ -10,6 +10,8 @@ const MEMBERSHIP_TYPES = [
   "Professional Fellowship",
   "Professional Membership",
   "Honorary Fellowship",
+  "Honorary Membership",
+  "Chartered Fellowship",
 ];
 
 export default function AdminMembershipReviewPage() {
@@ -30,7 +32,7 @@ export default function AdminMembershipReviewPage() {
         const typeFromDb =
           data.approvedMembershipType || data.requestedMembershipType || "";
 
-        // Ensure select value always matches one of the options
+        // Ensure select value matches one of the options
         setFinalType(MEMBERSHIP_TYPES.includes(typeFromDb) ? typeFromDb : "");
 
         setAdminNotes(data.adminNotes || "");
@@ -51,14 +53,12 @@ export default function AdminMembershipReviewPage() {
       }),
     });
 
-    // Only generate certificate for new applications
     if (!app.isUpdateRequest) {
       await fetch(`/api/admin/memberships/${id}/certificate`, {
         method: "POST",
       });
     }
 
-    // ✅ update UI immediately (so Status/Approved Type changes without refresh)
     setApp((prev: any) => ({
       ...prev,
       status: "approved",
@@ -82,7 +82,6 @@ export default function AdminMembershipReviewPage() {
       }),
     });
 
-    // ✅ update UI immediately
     setApp((prev: any) => ({
       ...prev,
       status: "rejected",
@@ -95,6 +94,10 @@ export default function AdminMembershipReviewPage() {
 
   if (loading) return <p>Loading…</p>;
   if (!app) return <p>Not found</p>;
+
+  const isChartered =
+    app.requestedMembershipType === "Chartered Fellowship" ||
+    finalType === "Chartered Fellowship";
 
   return (
     <div className="max-w-4xl space-y-8">
@@ -114,12 +117,10 @@ export default function AdminMembershipReviewPage() {
           <strong>Email:</strong> {app.email}
         </p>
 
-        {/* Requested should NEVER change */}
         <p>
           <strong>Requested Type:</strong> {app.requestedMembershipType}
         </p>
 
-        {/* ✅ show what admin approved/selected */}
         <p>
           <strong>Approved Type:</strong> {app.approvedMembershipType || "—"}
         </p>
@@ -138,6 +139,12 @@ export default function AdminMembershipReviewPage() {
       {/* DOCUMENTS */}
       <div className="bg-white border rounded-xl p-6 space-y-4">
         <h2 className="font-semibold">Submitted Documents</h2>
+
+        {isChartered && (
+          <p className="text-sm text-slate-500 italic">
+            Chartered Fellowship application — No documents required.
+          </p>
+        )}
 
         {app.cvUrl && (
           <a
@@ -173,43 +180,52 @@ export default function AdminMembershipReviewPage() {
           </a>
         )}
 
-        {/* ZIP DOWNLOAD */}
-        <div className="pt-4">
-          <a
-            href={`/api/admin/memberships/${app._id}/documents`}
-            className="btn btn-outline"
-          >
-            Download All Documents (ZIP)
-          </a>
-        </div>
+        {!isChartered && (
+          <div className="pt-4">
+            <a
+              href={`/api/admin/memberships/${app._id}/documents`}
+              className="btn btn-outline"
+            >
+              Download All Documents (ZIP)
+            </a>
+          </div>
+        )}
       </div>
 
       {/* APPROVAL CHECKLIST */}
       <div className="bg-slate-50 border rounded-lg p-4 space-y-2">
         <h3 className="font-semibold">Approval Checklist</h3>
 
-        <label className="flex items-center gap-2">
-          <input type="checkbox" checked={!!app.cvUrl} readOnly />
-          CV reviewed
-        </label>
+        {isChartered ? (
+          <p className="text-sm text-slate-600">
+            ✅ Chartered Fellowship (Exempt from CV, Certificates, and Payment Receipt review)
+          </p>
+        ) : (
+          <>
+            <label className="flex items-center gap-2">
+              <input type="checkbox" checked={!!app.cvUrl} readOnly />
+              CV reviewed
+            </label>
 
-        <label className="flex items-center gap-2">
-          <input
-            type="checkbox"
-            checked={app.certificatesUrl?.length > 0}
-            readOnly
-          />
-          Certificates reviewed
-        </label>
+            <label className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                checked={app.certificatesUrl?.length > 0}
+                readOnly
+              />
+              Certificates reviewed
+            </label>
 
-        <label className="flex items-center gap-2">
-          <input
-            type="checkbox"
-            checked={!!app.paymentReceiptUrl}
-            readOnly
-          />
-          Payment receipt reviewed
-        </label>
+            <label className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                checked={!!app.paymentReceiptUrl}
+                readOnly
+              />
+              Payment receipt reviewed
+            </label>
+          </>
+        )}
       </div>
 
       {/* FINAL DECISION */}

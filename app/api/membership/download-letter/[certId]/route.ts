@@ -39,12 +39,10 @@ function getArticleForMembershipType(type: string) {
   if (t.startsWith("affiliate")) return "an";
   if (t.startsWith("associate")) return "an";
 
-  // fallback
   const first = t[0] || "";
   return "aeiou".includes(first) ? "an" : "a";
 }
 
-/** Acronym is always prefix + ECRMI */
 function getEcrmiAcronym(membershipType: string) {
   const t = String(membershipType || "").toLowerCase();
 
@@ -174,7 +172,6 @@ function getFeeRows(membershipType: string): FeeRow[] {
     ];
   }
 
-  // ✅ Honorary is free -> no fee table shown
   if (t.includes("honorary")) {
     return [];
   }
@@ -209,6 +206,14 @@ export async function GET(
     (app as any).requestedMembershipType ??
     "";
 
+  // Block Chartered membership tier from issuing letters
+  if (String(membershipType).toLowerCase().includes("charter")) {
+    return NextResponse.json(
+      { error: "Membership letter is not applicable for Chartered Fellowship." },
+      { status: 400 }
+    );
+  }
+
   const article = getArticleForMembershipType(membershipType);
   const acronym = getEcrmiAcronym(membershipType);
 
@@ -224,7 +229,6 @@ export async function GET(
   const pdfDoc = await PDFDocument.create();
   pdfDoc.registerFontkit(fontkit);
 
-  // Fonts (custom if present, fallback otherwise)
   const regularFontPath = path.join(
     process.cwd(),
     "public",
@@ -249,7 +253,6 @@ export async function GET(
     bold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
   }
 
-  // Letterhead
   const letterBgPath = path.join(
     process.cwd(),
     "public",
@@ -283,9 +286,8 @@ export async function GET(
     height: pageHeight,
   });
 
-  // Layout
   const BODY_SIZE = 11;
-  const BODY_LINE = 14; // tighter spacing
+  const BODY_LINE = 14;
   const LEFT = 70;
   const MAX_WIDTH = pageWidth - 140;
 
@@ -344,7 +346,7 @@ export async function GET(
     }
 
     flush();
-    return currentY - 2; // tiny paragraph gap
+    return currentY - 2;
   }
 
   function drawWrappedText(text: string, x: number, y: number) {
@@ -378,10 +380,9 @@ export async function GET(
       font: bold,
     });
 
-    return y - 28; // space after Total
+    return y - 28;
   }
 
-  // ---------- CONTENT ----------
   let y = pageHeight - 180;
 
   page.drawText(formattedDate, { x: LEFT, y, size: 12, font });
@@ -398,7 +399,6 @@ export async function GET(
   page.drawText("Dear Sir/Madam,", { x: LEFT, y, size: 12, font });
   y -= 28;
 
-  // Subject with correct article
   const subject = `ELECTION AS ${article.toUpperCase()} ${String(
     membershipType
   ).toUpperCase()}`;
@@ -414,7 +414,6 @@ export async function GET(
   });
   y -= 26;
 
-  // Paragraph 1 (correct article + bold membership type)
   y = drawWrappedSegs(
     [
       {
@@ -434,7 +433,6 @@ export async function GET(
   const totalWords = feeRows.length ? `${numberToWords(total)} Naira Only` : "";
   const totalNumeric = feeRows.length ? formatMoney(total) : "";
 
-  // Merge membership number sentence + "In accordance..." in same block (space saving)
   y = drawWrappedSegs(
     feeRows.length
       ? [
@@ -458,7 +456,6 @@ export async function GET(
             text:
               " which should be quoted in all correspondence with the Institute. ",
           },
-          // ✅ Honorary: formal free-of-charge sentence (no amount, no table)
           {
             text:
               "Please be informed that this membership category is conferred free of charge and attracts no induction fee, annual subscription or processing fee.",
@@ -469,10 +466,8 @@ export async function GET(
   );
 
   if (feeRows.length) {
-    // Breakdown table
     y = drawBreakdownTableCentered(feeRows, y);
 
-    // Payment line first
     y = drawWrappedSegs(
       [
         { text: "Kindly make payment into the Institute's " },
@@ -483,14 +478,12 @@ export async function GET(
       y
     );
 
-    // Annual subscription paragraph
     y = drawWrappedText(
       "Kindly be informed that your Annual Subscription becomes due for payment by January 31st each year and you are entitled to the following privileges as stated:",
       LEFT,
       y
     );
 
-    // Privileges
     y = drawWrappedText(
       "1. Professional training special courses and conferences at reduced cost.",
       LEFT + 20,
@@ -516,27 +509,22 @@ export async function GET(
       y
     );
 
-    // ✅ space between No.4 and next paragraph
     y -= 8;
 
-    // Compliance paragraph
     y = drawWrappedText(
       "Your election will remain valid ninety (90) days after which will be nullified if not formalized by payment of your dues as specified above. Please note that you are required to attend the institute's pre-induction training and induction ceremony which is compulsory for every inductee. Also note that this admission letter is provisional and would be withdrawn and your membership cancelled if any irregularity is discovered in your credentials.",
       LEFT,
       y
     );
 
-    // ✅ space between credentials paragraph and congratulations
     y -= 8;
   } else {
-    // ✅ Honorary: keep everything, but remove money/payment references
     y = drawWrappedText(
       "Kindly be informed that no Annual Subscription is payable for this membership category and you are entitled to the following privileges as stated:",
       LEFT,
       y
     );
 
-    // Privileges (same as paid)
     y = drawWrappedText(
       "1. Professional training special courses and conferences at reduced cost.",
       LEFT + 20,
@@ -564,7 +552,6 @@ export async function GET(
 
     y -= 8;
 
-    // Compliance paragraph (same, but without payment)
     y = drawWrappedText(
       "Your election will remain valid ninety (90) days after which will be nullified if not formalized by completion of the institute's required documentation and induction formalities. Please note that you are required to attend the institute's pre-induction training and induction ceremony which is compulsory for every inductee. Also note that this admission letter is provisional and would be withdrawn and your membership cancelled if any irregularity is discovered in your credentials.",
       LEFT,
@@ -580,16 +567,13 @@ export async function GET(
     y
   );
 
-  // ---------- FOOTER / SIGNATURE ----------
- 
-y -= 14;
+  y -= 14;
 
+  const FOOTER_TARGET_Y = feeRows.length ? 190 : 290;
+  const FOOTER_MIN_Y = 120;
 
-const FOOTER_TARGET_Y = feeRows.length ? 190 : 290; 
-const FOOTER_MIN_Y = 120; 
-
-y = Math.min(y, FOOTER_TARGET_Y);
-if (y < FOOTER_MIN_Y) y = FOOTER_MIN_Y;
+  y = Math.min(y, FOOTER_TARGET_Y);
+  if (y < FOOTER_MIN_Y) y = FOOTER_MIN_Y;
 
   page.drawText("Yours faithfully,", { x: LEFT, y, size: 11, font });
   y -= 18;
@@ -602,7 +586,6 @@ if (y < FOOTER_MIN_Y) y = FOOTER_MIN_Y;
   });
   y -= 14;
 
-  // Signature image (jpeg/jpg/png) - smaller
   const sigJpeg = path.join(
     process.cwd(),
     "public",

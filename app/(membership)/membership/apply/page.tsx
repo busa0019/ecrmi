@@ -19,10 +19,10 @@ const MEMBERSHIP_TYPES: { value: string; label: string }[] = [
   { value: "Professional Fellowship", label: "Professional Fellowship (₦200,000)" },
   { value: "Professional Membership", label: "Professional Membership (₦120,000)" },
   { value: "Honorary Membership", label: "Honorary Membership (Free)" },
+  { value: "Chartered Fellowship", label: "Chartered Fellowship (Free)" },
 ];
 
 function isValidEmail(email: string) {
-  // simple + practical validation
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
 }
 
@@ -47,6 +47,8 @@ export default function MembershipApplyPage() {
 
     declaration: false,
   });
+
+  const isChartered = form.membershipType === "Chartered Fellowship";
 
   const selectedMembershipLabel =
     MEMBERSHIP_TYPES.find((m) => m.value === form.membershipType)?.label ||
@@ -117,8 +119,10 @@ export default function MembershipApplyPage() {
         setError("You must accept the declaration to continue.");
         return;
       }
-      // optional rule: require at least one document
+
+      // Bypass document checks if Chartered Fellowship
       if (
+        !isChartered &&
         !form.cvUrl &&
         form.certificateUrls.length === 0 &&
         !form.paymentReceiptUrl
@@ -143,11 +147,10 @@ export default function MembershipApplyPage() {
     setUploading(true);
 
     try {
-      // ✅ keep your original keys, but also send aliases to match schema
       const payload = {
         ...form,
-        requestedMembershipType: form.membershipType, // ✅ this is now clean value (no price)
-        certificatesUrl: form.certificateUrls, // schema-friendly alias
+        requestedMembershipType: form.membershipType,
+        certificatesUrl: form.certificateUrls,
       };
 
       const res = await fetch("/api/membership/apply", {
@@ -302,178 +305,182 @@ export default function MembershipApplyPage() {
             <>
               <h2 className="text-xl font-semibold">Documents & Declaration</h2>
 
-              <label className="text-sm font-medium">
-                Curriculum Vitae (CV) (PDF)
-              </label>
-              <input
-                type="file"
-                accept=".pdf"
-                className="input w-full"
-                disabled={uploading}
-                onChange={async (e) => {
-                  const input = e.currentTarget; // ✅ capture before await
-                  const file = input.files?.[0];
-                  if (!file) return;
+              {/* Hides CV, Certificates, and Payment Box if Chartered Member */}
+              {!isChartered && (
+                <>
+                  <label className="text-sm font-medium">
+                    Curriculum Vitae (CV) (PDF)
+                  </label>
+                  <input
+                    type="file"
+                    accept=".pdf"
+                    className="input w-full"
+                    disabled={uploading}
+                    onChange={async (e) => {
+                      const input = e.currentTarget;
+                      const file = input.files?.[0];
+                      if (!file) return;
 
-                  setError("");
-                  setUploading(true);
-                  try {
-                    const url = await uploadFile(file);
-                    setForm((prev) => ({ ...prev, cvUrl: url }));
-                  } catch (err: any) {
-                    setError(err?.message || "CV upload failed");
-                  } finally {
-                    setUploading(false);
-                    input.value = ""; // ✅ safe reset
-                  }
-                }}
-              />
-              {form.cvUrl && (
-                <p className="text-xs text-green-700">
-                  CV uploaded successfully.
-                </p>
-              )}
+                      setError("");
+                      setUploading(true);
+                      try {
+                        const url = await uploadFile(file);
+                        setForm((prev) => ({ ...prev, cvUrl: url }));
+                      } catch (err: any) {
+                        setError(err?.message || "CV upload failed");
+                      } finally {
+                        setUploading(false);
+                        input.value = "";
+                      }
+                    }}
+                  />
+                  {form.cvUrl && (
+                    <p className="text-xs text-green-700">
+                      CV uploaded successfully.
+                    </p>
+                  )}
 
-              <label className="text-sm font-medium">
-                Certificates (multiple allowed)
-              </label>
-              <input
-                type="file"
-                multiple
-                accept=".pdf,.jpg,.png"
-                className="input w-full"
-                disabled={uploading}
-                onChange={async (e) => {
-                  const input = e.currentTarget; // ✅ capture before await
-                  const files = Array.from(input.files || []);
-                  if (!files.length) return;
+                  <label className="text-sm font-medium">
+                    Certificates (multiple allowed)
+                  </label>
+                  <input
+                    type="file"
+                    multiple
+                    accept=".pdf,.jpg,.png"
+                    className="input w-full"
+                    disabled={uploading}
+                    onChange={async (e) => {
+                      const input = e.currentTarget;
+                      const files = Array.from(input.files || []);
+                      if (!files.length) return;
 
-                  setError("");
-                  setUploading(true);
-                  try {
-                    const urls = await Promise.all(files.map(uploadFile));
+                      setError("");
+                      setUploading(true);
+                      try {
+                        const urls = await Promise.all(files.map(uploadFile));
 
-                    // ✅ append (so user can add more later without losing earlier uploads)
-                    setForm((prev) => ({
-                      ...prev,
-                      certificateUrls: [...prev.certificateUrls, ...urls],
-                    }));
-                  } catch (err: any) {
-                    setError(err?.message || "Certificates upload failed");
-                  } finally {
-                    setUploading(false);
-                    input.value = ""; // ✅ safe reset
-                  }
-                }}
-              />
+                        setForm((prev) => ({
+                          ...prev,
+                          certificateUrls: [...prev.certificateUrls, ...urls],
+                        }));
+                      } catch (err: any) {
+                        setError(err?.message || "Certificates upload failed");
+                      } finally {
+                        setUploading(false);
+                        input.value = "";
+                      }
+                    }}
+                  />
 
-              {form.certificateUrls.length > 0 && (
-                <div className="bg-slate-50 border rounded-lg p-3">
-                  <p className="text-sm font-medium mb-2">
-                    Uploaded certificates: {form.certificateUrls.length}
+                  {form.certificateUrls.length > 0 && (
+                    <div className="bg-slate-50 border rounded-lg p-3">
+                      <p className="text-sm font-medium mb-2">
+                        Uploaded certificates: {form.certificateUrls.length}
+                      </p>
+                      <ul className="space-y-2">
+                        {form.certificateUrls.map((url, idx) => (
+                          <li
+                            key={url + idx}
+                            className="flex items-center justify-between gap-3"
+                          >
+                            <a
+                              href={url}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="text-sm text-blue-600 underline truncate"
+                            >
+                              View document {idx + 1}
+                            </a>
+                            <button
+                              type="button"
+                              className="text-xs text-red-600 flex items-center gap-1"
+                              onClick={() => removeCertificate(idx)}
+                            >
+                              <X className="w-4 h-4" /> Remove
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  <p className="text-xs text-gray-500">
+                    Accepted formats: PDF, JPG, PNG
                   </p>
-                  <ul className="space-y-2">
-                    {form.certificateUrls.map((url, idx) => (
-                      <li
-                        key={url + idx}
-                        className="flex items-center justify-between gap-3"
-                      >
-                        <a
-                          href={url}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="text-sm text-blue-600 underline truncate"
-                        >
-                          View document {idx + 1}
-                        </a>
-                        <button
-                          type="button"
-                          className="text-xs text-red-600 flex items-center gap-1"
-                          onClick={() => removeCertificate(idx)}
-                        >
-                          <X className="w-4 h-4" /> Remove
-                        </button>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
 
-              <p className="text-xs text-gray-500">
-                Accepted formats: PDF, JPG, PNG
-              </p>
-               
-               <div className="rounded-2xl border border-amber-300/60 bg-gradient-to-b from-amber-50 to-white p-4 sm:p-5">
-  <div className="flex items-start gap-3">
-    <div className="mt-0.5 rounded-xl bg-amber-100 p-2">
-      <AlertTriangle className="w-5 h-5 text-amber-700" />
-    </div>
+                  <div className="rounded-2xl border border-amber-300/60 bg-gradient-to-b from-amber-50 to-white p-4 sm:p-5">
+                    <div className="flex items-start gap-3">
+                      <div className="mt-0.5 rounded-xl bg-amber-100 p-2">
+                        <AlertTriangle className="w-5 h-5 text-amber-700" />
+                      </div>
 
-    <div className="flex-1">
-      <div className="flex flex-wrap items-center gap-2">
-        <p className="font-semibold text-slate-900">Payment Required</p>
-        <span className="inline-flex items-center rounded-full bg-amber-200/60 px-2.5 py-1 text-xs font-semibold text-amber-900">
-          Form Fee: ₦10,000
-        </span>
-      </div>
+                      <div className="flex-1">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <p className="font-semibold text-slate-900">Payment Required</p>
+                          <span className="inline-flex items-center rounded-full bg-amber-200/60 px-2.5 py-1 text-xs font-semibold text-amber-900">
+                            Form Fee: ₦10,000
+                          </span>
+                        </div>
 
-      <p className="mt-1 text-sm text-slate-700">
-        Please pay the <strong>total amount</strong>:
-        <strong> (selected membership fee + ₦10,000 form fee)</strong> and upload
-        your payment receipt.
-      </p>
+                        <p className="mt-1 text-sm text-slate-700">
+                          Please pay the <strong>total amount</strong>:
+                          <strong> (selected membership fee + ₦10,000 form fee)</strong> and upload
+                          your payment receipt.
+                        </p>
 
-      <div className="mt-3 grid gap-1 text-sm text-slate-800">
-        <p>
-          <strong>Bank:</strong> UBA
-        </p>
-        <p>
-          <strong>Account Name:</strong> Emergency, Crisis &amp; Risk Management
-          Institute (ECRMI)
-        </p>
-        <p>
-          <strong>Account Number:</strong> 1013635573
-        </p>
-      </div>
+                        <div className="mt-3 grid gap-1 text-sm text-slate-800">
+                          <p>
+                            <strong>Bank:</strong> UBA
+                          </p>
+                          <p>
+                            <strong>Account Name:</strong> Emergency, Crisis &amp; Risk Management
+                            Institute (ECRMI)
+                          </p>
+                          <p>
+                            <strong>Account Number:</strong> 1013635573
+                          </p>
+                        </div>
 
-      <p className="mt-3 text-xs text-slate-600">
-        <strong>Selected Membership:</strong> {selectedMembershipLabel}
-      </p>
-    </div>
-  </div>
-</div>
-    
-              <label className="text-sm font-medium">
-                 Payment Receipt (Required — Membership Fee + ₦10,000 Form Fee)
-              </label>
+                        <p className="mt-3 text-xs text-slate-600">
+                          <strong>Selected Membership:</strong> {selectedMembershipLabel}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
 
-              <input
-                type="file"
-                accept=".pdf,.jpg,.png"
-                className="input w-full"
-                disabled={uploading}
-                onChange={async (e) => {
-                  const input = e.currentTarget; // ✅ capture before await
-                  const file = input.files?.[0];
-                  if (!file) return;
+                  <label className="text-sm font-medium">
+                    Payment Receipt (Required — Membership Fee + ₦10,000 Form Fee)
+                  </label>
 
-                  setError("");
-                  setUploading(true);
-                  try {
-                    const url = await uploadFile(file);
-                    setForm((prev) => ({ ...prev, paymentReceiptUrl: url }));
-                  } catch (err: any) {
-                    setError(err?.message || "Receipt upload failed");
-                  } finally {
-                    setUploading(false);
-                    input.value = ""; // ✅ safe reset
-                  }
-                }}
-              />
-              {form.paymentReceiptUrl && (
-                <p className="text-xs text-green-700">
-                  Receipt uploaded successfully.
-                </p>
+                  <input
+                    type="file"
+                    accept=".pdf,.jpg,.png"
+                    className="input w-full"
+                    disabled={uploading}
+                    onChange={async (e) => {
+                      const input = e.currentTarget;
+                      const file = input.files?.[0];
+                      if (!file) return;
+
+                      setError("");
+                      setUploading(true);
+                      try {
+                        const url = await uploadFile(file);
+                        setForm((prev) => ({ ...prev, paymentReceiptUrl: url }));
+                      } catch (err: any) {
+                        setError(err?.message || "Receipt upload failed");
+                      } finally {
+                        setUploading(false);
+                        input.value = "";
+                      }
+                    }}
+                  />
+                  {form.paymentReceiptUrl && (
+                    <p className="text-xs text-green-700">
+                      Receipt uploaded successfully.
+                    </p>
+                  )}
+                </>
               )}
 
               <label className="flex gap-2 text-sm">
@@ -517,7 +524,7 @@ export default function MembershipApplyPage() {
                     </div>
 
                     <div className="flex items-start justify-between gap-3">
-                      <dt className="text-slate-600">Date of Birth</dt>
+                      <dt className="text-slate-600">Date</dt>
                       <dd className="font-medium text-slate-900 text-right">
                         {form.dob || "—"}
                       </dd>
@@ -567,7 +574,11 @@ export default function MembershipApplyPage() {
                     {/* CV */}
                     <div className="rounded-lg border bg-white p-3">
                       <p className="text-xs text-slate-600 mb-2">CV</p>
-                      {form.cvUrl ? (
+                      {isChartered ? (
+                        <span className="inline-flex items-center rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-600">
+                          Not Required
+                        </span>
+                      ) : form.cvUrl ? (
                         <div className="flex items-center justify-between gap-2">
                           <span className="inline-flex items-center rounded-full bg-green-600/10 px-2.5 py-1 text-xs font-semibold text-green-700">
                             Uploaded
@@ -588,43 +599,49 @@ export default function MembershipApplyPage() {
                       )}
                     </div>
 
-                    {/* Certificates (dropdown) */}
+                    {/* Certificates */}
                     <div className="rounded-lg border bg-white p-3">
                       <p className="text-xs text-slate-600 mb-2">Certificates</p>
 
-                      <div className="flex items-center justify-between gap-2">
-                        <span className="inline-flex items-center rounded-full bg-slate-900/5 px-2.5 py-1 text-xs font-semibold text-slate-700">
-                          {form.certificateUrls.length} uploaded
+                      {isChartered ? (
+                        <span className="inline-flex items-center rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-600">
+                          Not Required
                         </span>
+                      ) : (
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="inline-flex items-center rounded-full bg-slate-900/5 px-2.5 py-1 text-xs font-semibold text-slate-700">
+                            {form.certificateUrls.length} uploaded
+                          </span>
 
-                        {form.certificateUrls.length > 0 ? (
-                          <details className="relative">
-                            <summary className="list-none cursor-pointer select-none text-xs font-semibold text-blue-600 underline">
-                              View
-                            </summary>
+                          {form.certificateUrls.length > 0 ? (
+                            <details className="relative">
+                              <summary className="list-none cursor-pointer select-none text-xs font-semibold text-blue-600 underline">
+                                View
+                              </summary>
 
-                            <div className="absolute right-0 z-20 mt-2 w-56 rounded-lg border bg-white shadow-lg">
-                              <div className="max-h-56 overflow-auto p-2">
-                                {form.certificateUrls.map((url, idx) => (
-                                  <a
-                                    key={url + idx}
-                                    href={url}
-                                    target="_blank"
-                                    rel="noreferrer"
-                                    className="block rounded-md px-2 py-2 text-xs text-slate-700 hover:bg-slate-50"
-                                  >
-                                    Certificate {idx + 1}
-                                  </a>
-                                ))}
+                              <div className="absolute right-0 z-20 mt-2 w-56 rounded-lg border bg-white shadow-lg">
+                                <div className="max-h-56 overflow-auto p-2">
+                                  {form.certificateUrls.map((url, idx) => (
+                                    <a
+                                      key={url + idx}
+                                      href={url}
+                                      target="_blank"
+                                      rel="noreferrer"
+                                      className="block rounded-md px-2 py-2 text-xs text-slate-700 hover:bg-slate-50"
+                                    >
+                                      Certificate {idx + 1}
+                                    </a>
+                                  ))}
+                                </div>
                               </div>
-                            </div>
-                          </details>
-                        ) : (
-                          <span className="text-xs text-slate-400">—</span>
-                        )}
-                      </div>
+                            </details>
+                          ) : (
+                            <span className="text-xs text-slate-400">—</span>
+                          )}
+                        </div>
+                      )}
 
-                      {form.certificateUrls.length > 0 && (
+                      {!isChartered && form.certificateUrls.length > 0 && (
                         <p className="mt-2 text-[11px] text-slate-500">
                           Tip: Clicking any item opens it in a new tab.
                         </p>
@@ -636,7 +653,11 @@ export default function MembershipApplyPage() {
                       <p className="text-xs text-slate-600 mb-2">
                         Payment Receipt
                       </p>
-                      {form.paymentReceiptUrl ? (
+                      {isChartered ? (
+                        <span className="inline-flex items-center rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-600">
+                          Not Required
+                        </span>
+                      ) : form.paymentReceiptUrl ? (
                         <div className="flex items-center justify-between gap-2">
                           <span className="inline-flex items-center rounded-full bg-green-600/10 px-2.5 py-1 text-xs font-semibold text-green-700">
                             Uploaded

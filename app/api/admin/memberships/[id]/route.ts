@@ -11,6 +11,7 @@ function getMembershipCode(membershipType: string) {
   const t = String(membershipType || "").toLowerCase();
 
   // more specific first
+  if (t.includes("chartered")) return "CF";
   if (t.includes("professional") && t.includes("fellowship")) return "PF";
   if (t.includes("honorary")) return "H";
   if (t.includes("affiliate")) return "AF"; // avoids clash with Associate

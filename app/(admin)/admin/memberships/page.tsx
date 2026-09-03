@@ -10,12 +10,18 @@ type LastImportInfo = {
   at: string; // ISO
 };
 
+const ITEMS_PER_PAGE = 8;
+
 export default function AdminMembershipsPage() {
   const [applications, setApplications] = useState<any[]>([]);
   const [updates, setUpdates] = useState<any[]>([]);
   const [members, setMembers] = useState<any[]>([]);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
+
+  // Pagination states
+  const [appsPage, setAppsPage] = useState(1);
+  const [membersPage, setMembersPage] = useState(1);
 
   const [lastImport, setLastImport] = useState<LastImportInfo | null>(null);
 
@@ -72,6 +78,21 @@ export default function AdminMembershipsPage() {
       lower(m.certificateId).includes(lower(search))
   );
 
+  // Calculate total pages
+  const totalAppsPages = Math.ceil(filteredApps.length / ITEMS_PER_PAGE) || 1;
+  const totalMembersPages = Math.ceil(filteredMembers.length / ITEMS_PER_PAGE) || 1;
+
+  // Get current page slices
+  const currentApps = filteredApps.slice(
+    (appsPage - 1) * ITEMS_PER_PAGE,
+    appsPage * ITEMS_PER_PAGE
+  );
+
+  const currentMembers = filteredMembers.slice(
+    (membersPage - 1) * ITEMS_PER_PAGE,
+    membersPage * ITEMS_PER_PAGE
+  );
+
   if (loading) return <p>Loading...</p>;
 
   return (
@@ -81,7 +102,11 @@ export default function AdminMembershipsPage() {
         className="input"
         placeholder="Search name or email..."
         value={search}
-        onChange={(e) => setSearch(e.target.value)}
+        onChange={(e) => {
+          setSearch(e.target.value);
+          setAppsPage(1); // Reset pagination on search change
+          setMembersPage(1);
+        }}
       />
 
       {/* MEMBERSHIP APPLICATION RECORDS */}
@@ -107,13 +132,13 @@ export default function AdminMembershipsPage() {
               </tr>
             </thead>
             <tbody>
-              {filteredApps.map((app) => (
+              {currentApps.map((app) => (
                 <tr key={app._id} className="border-b">
                   <td className="p-4">{app.fullName || "—"}</td>
                   <td className="p-4">{app.email || "—"}</td>
                   <td className="p-4">
-  {app.approvedMembershipType || app.requestedMembershipType || "—"}
-</td>
+                    {app.approvedMembershipType || app.requestedMembershipType || "—"}
+                  </td>
                   <td className="p-4 capitalize">{app.status || "—"}</td>
                   <td className="p-4">
                     <Link
@@ -134,6 +159,31 @@ export default function AdminMembershipsPage() {
               )}
             </tbody>
           </table>
+
+          {/* Pagination for Membership Records */}
+          {totalAppsPages > 1 && (
+            <div className="flex items-center justify-between p-4 border-t bg-gray-50">
+              <span className="text-sm text-gray-600">
+                Page {appsPage} of {totalAppsPages}
+              </span>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setAppsPage((p) => Math.max(p - 1, 1))}
+                  disabled={appsPage === 1}
+                  className="px-3 py-1 text-sm border bg-white rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100"
+                >
+                  Previous
+                </button>
+                <button
+                  onClick={() => setAppsPage((p) => Math.min(p + 1, totalAppsPages))}
+                  disabled={appsPage === totalAppsPages}
+                  className="px-3 py-1 text-sm border bg-white rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100"
+                >
+                  Next
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
@@ -158,8 +208,8 @@ export default function AdminMembershipsPage() {
                   <td className="p-4">{app.fullName || "—"}</td>
                   <td className="p-4">{app.email || "—"}</td>
                   <td className="p-4">
-  {app.approvedMembershipType || app.requestedMembershipType || "—"}
-</td>
+                    {app.approvedMembershipType || app.requestedMembershipType || "—"}
+                  </td>
                   <td className="p-4 capitalize">{app.status || "—"}</td>
                   <td className="p-4">
                     <Link
@@ -268,7 +318,7 @@ export default function AdminMembershipsPage() {
         )}
       </div>
 
-      {/* MEMBERS LIST (new) */}
+      {/* MEMBERS LIST */}
       <div>
         <h1 className="text-2xl font-bold mb-4">
           Members (from Members collection)
@@ -285,7 +335,7 @@ export default function AdminMembershipsPage() {
               </tr>
             </thead>
             <tbody>
-              {filteredMembers.map((m) => (
+              {currentMembers.map((m) => (
                 <tr key={m._id} className="border-b">
                   <td className="p-4">{m.fullName || "—"}</td>
                   <td className="p-4">{m.email || "—"}</td>
@@ -303,6 +353,31 @@ export default function AdminMembershipsPage() {
               )}
             </tbody>
           </table>
+
+          {/* Pagination for Members List */}
+          {totalMembersPages > 1 && (
+            <div className="flex items-center justify-between p-4 border-t bg-gray-50">
+              <span className="text-sm text-gray-600">
+                Page {membersPage} of {totalMembersPages}
+              </span>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setMembersPage((p) => Math.max(p - 1, 1))}
+                  disabled={membersPage === 1}
+                  className="px-3 py-1 text-sm border bg-white rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100"
+                >
+                  Previous
+                </button>
+                <button
+                  onClick={() => setMembersPage((p) => Math.min(p + 1, totalMembersPages))}
+                  disabled={membersPage === totalMembersPages}
+                  className="px-3 py-1 text-sm border bg-white rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100"
+                >
+                  Next
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
