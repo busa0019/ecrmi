@@ -11,7 +11,7 @@ const steps = [
   "Review & Submit",
 ];
 
-// ✅ label shows price, value stays clean (what you store in DB)
+// ✅ label shows price, value stays clean (store in DB)
 const MEMBERSHIP_TYPES: { value: string; label: string }[] = [
   { value: "Affiliate Member", label: "Affiliate Member (₦65,000)" },
   { value: "Associate Member", label: "Associate Member (₦75,000)" },
