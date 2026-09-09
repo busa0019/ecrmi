@@ -19,7 +19,7 @@ const MEMBERSHIP_TYPES: { value: string; label: string }[] = [
   { value: "Professional Fellowship", label: "Professional Fellowship (₦200,000)" },
   { value: "Professional Membership", label: "Professional Membership (₦120,000)" },
   { value: "Honorary Membership", label: "Honorary Membership (Free)" },
-  { value: "Chartered Fellowship", label: "Chartered Fellowship (Free)" },
+  { value: "Chartered Fellowship", label: "Chartered Fellowship (₦200,000)" },
 ];
 
 function isValidEmail(email: string) {

@@ -12,7 +12,7 @@ type Layout = {
   page: { w: number; h: number };
   name: { y: number; size: number };
   membershipNo: { x: number; y: number; size: number };
-  date?: { x: number; y: number; size: number };
+  date?: { x: number; y: number; size: number; bold?: boolean };
   qr: { x: number; y: number; w: number; h: number; bg?: string };
 };
 
@@ -59,8 +59,9 @@ const DEFAULT_LAYOUT: Layout = {
 
 const LAYOUTS: Record<string, Partial<Layout>> = {
   "chartered-fellowship.jpeg": {
-    membershipNo: { x: 250, y: 210, size: 16 },
-    date: { x: 470, y: 517, size: 17 },
+    name: { y: 695, size: 36 },
+    membershipNo: { x: 257, y: 228, size: 16 },
+    date: { x: 469, y: 528, size: 17, bold: true },
     qr: { x: 590, y: 170, w: 100, h: 100, bg: "#fbf5f8" },
   },
 
@@ -227,7 +228,7 @@ export async function GET(
       x: layout.date.x,
       y: layout.date.y,
       size: layout.date.size,
-      font,
+      font: layout.date.bold ? bold : font,
     });
   }
 
